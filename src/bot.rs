@@ -18,13 +18,15 @@ pub struct Data {
 }
 
 pub fn load_options() -> FrameworkOptions<Data, StdError> {
+    let commands_init = vec![
+        commands::help(),
+        commands::join(),
+        commands::leave(),
+        commands::play(),
+    ];
+
     poise::FrameworkOptions {
-        commands: vec![
-            commands::help(),
-            commands::join(),
-            commands::leave(),
-            commands::play(),
-        ],
+        commands: commands_init,
         on_error: |error| Box::pin(error::on_error(error)),
         skip_checks_for_owners: false,
         ..Default::default()
