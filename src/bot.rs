@@ -1,17 +1,10 @@
 use poise::{FrameworkOptions, Framework};
 use poise::serenity_prelude as serenity;
 use songbird::serenity::SerenityInit;
-use serenity::prelude::TypeMapKey;
 use reqwest::Client as HttpClient;
 
 use crate::{StdError, StdResult};
 use crate::{error, commands};
-
-struct HttpKey;
-
-impl TypeMapKey for HttpKey {
-    type Value = HttpClient;
-}
 
 pub struct Data {
     pub http_key: HttpClient
@@ -62,7 +55,6 @@ pub async fn load_bot(options: FrameworkOptions<Data, StdError>) -> StdResult<se
     Ok(serenity::Client::builder(discord_token, intents)
         .framework(framework)
         .register_songbird()
-        .type_map_insert::<HttpKey>(HttpClient::new())
         .await
         .expect("Failed creating discord client"))
 }
