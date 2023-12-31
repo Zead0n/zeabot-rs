@@ -24,7 +24,6 @@ async fn main() {
     };
     
     if let Err(e) = discord_bot.start().await {
-        panic!("Skill issue: {}", e);
+        panic!("Skill issue: {:?}", e);
     }
-
 }
