@@ -1,0 +1,25 @@
+[package]
+name = "zeadon-bot"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+#Async
+tokio = { version = "1.35.1", features=["full"] }
+
+#Discord
+serenity = { version = "0.12.0", default-features = false, features = ["client", "gateway", "rustls_backend", "model", "cache"] }
+poise = "0.6.1-rc1" #Outdated for now
+songbird = { version = "0.4.0", features = ["driver", "gateway"] }
+
+#Web
+reqwest = "0.11.23"
+
+#Misc
+rusty_ffmpeg = "0.13.2"
+symphonia = { version = "0.5.3", features = ["aac", "alac", "mp3"] }
+youtube_dl = "0.9.0"
+
+dotenv = "0.15.0"
