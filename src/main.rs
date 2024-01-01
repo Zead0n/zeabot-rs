@@ -1,5 +1,6 @@
 mod bot;
 mod commands;
+mod command;
 mod error;
 
 extern crate dotenv;

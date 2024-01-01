@@ -11,12 +11,7 @@ pub struct Data {
 }
 
 pub fn load_options() -> FrameworkOptions<Data, StdError> {
-    let commands_init = vec![
-        commands::help(),
-        commands::join(),
-        commands::leave(),
-        commands::play(),
-    ];
+    let commands_init = commands::get_commands();
 
     poise::FrameworkOptions {
         commands: commands_init,
