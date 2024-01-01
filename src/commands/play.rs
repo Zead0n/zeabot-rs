@@ -1,6 +1,6 @@
 use songbird::input::YoutubeDl;
 
-use crate::{Context, StdResult};
+use crate::{Context, StdResult, commands};
 
 #[poise::command(slash_command)]
 pub async fn play(
@@ -29,6 +29,10 @@ pub async fn play(
    //    }
    // }
 
+   if let Err(e) = ctx.say("Should require subsommand").await {
+      panic!("Failed send play is subcommand nitification: {:?}", e);
+   }
+
    Ok(())
 }
 
@@ -38,8 +42,16 @@ pub async fn url(
    ctx: Context<'_>,
    #[description = "Enter a URL"] url: String
 ) -> StdResult<()> {
-   let _do_search = !url.starts_with("http");
    let guild_id = ctx.guild_id().unwrap();
+   let has_handler = commands::handler_exist(ctx, guild_id).await?;
+
+   if !has_handler {
+      if let Err(e) = commands::join_channel(ctx).await {
+         panic!("Failed to join with '/play url': {:?}", e);
+      }
+   }
+   
+   let _do_search = !url.starts_with("http");
    let http_client = ctx.data().http_key.clone();
    let manager = songbird::get(ctx.serenity_context())
       .await
