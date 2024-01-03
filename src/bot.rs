@@ -11,10 +11,8 @@ pub struct Data {
 }
 
 pub fn load_options() -> FrameworkOptions<Data, StdError> {
-    let commands_init = commands::get_commands();
-
     poise::FrameworkOptions {
-        commands: commands_init,
+        commands: commands::get_commands(),
         on_error: |error| Box::pin(error::on_error(error)),
         skip_checks_for_owners: false,
         ..Default::default()
