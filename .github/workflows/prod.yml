@@ -38,7 +38,7 @@ jobs:
     - name: Build and push Docker images
       uses: mr-smithers-excellent/docker-build-push@v4
       with: 
-        image: zead0n/zeabot:latest
+        image: zead0n/zeabot
         registry: docker.io
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
