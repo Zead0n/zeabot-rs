@@ -4,6 +4,8 @@ services:
     image: zead0n/zeabot
     container_name: zeabot
     restart: unless-stopped
+    environment:
+      - DISCORD_TOKEN: ${DISCORD_TOKEN}
     build: 
       context: .
       dockerfile: Dockerfile

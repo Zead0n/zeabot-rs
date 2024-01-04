@@ -81,9 +81,10 @@ jobs:
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         script: |
           cd ~/Docker/zeabot-docker
+          export DISCORD_TOKEN=MTEzOTY5NjEwMTgzNDg5NTQ0MQ.G79CsY.o9ZHm1R3BHTjRECOnZyI6GaFdFc1wZuHzvTKSk
           docker login --username ${{ secrets.DOCKER_USERNAME }} --password ${{ secrets.DOCKER_PASSWORD }}
           docker compose down
           docker compose pull
-          DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }} docker compose up -d
+          docker compose up -d
 
 # Commit test #2
