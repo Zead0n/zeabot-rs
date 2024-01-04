@@ -64,7 +64,7 @@ jobs:
       run: rsync -avz compose.yml ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:~/Docker/zeabot-docker/
 
     - name: Deploy
-      uses: appleboy/sshactions@master
+      uses: appleboy/ssh-actions@master
       with:
         host: ${{ secrets.SSH_HOST }}
         username: ${{ secrets.SSH_USER }}
