@@ -38,7 +38,7 @@ jobs:
     - name: Build and push Docker images
       uses: mr-smithers-excellent/docker-build-push@v4
       with: 
-        image: zead0n/zeabot
+        image: zead0n/zeabot:latest
         registry: docker.io
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
@@ -67,7 +67,7 @@ jobs:
       run: ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
     - name: Install rsync
-      run: sudo apt-get rsync
+      run: sudo apt-get install rsync
 
     - name: Copy compose.yml with rsync
       run: rsync -avz compose.yml ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:~/Docker/zeabot-docker/
