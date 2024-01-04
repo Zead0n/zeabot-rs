@@ -82,6 +82,6 @@ jobs:
           cd ~/Docker/zeabot-docker
           docker compose down
           docker compose pull
-          docker compose up -e DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }} -d
+          DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }} docker compose up -d
 
 # Commit test #2
