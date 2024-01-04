@@ -2,8 +2,7 @@
 FROM messense/rust-musl-cross:x86_64-musl as chef
 ENV LIBOPUS_STATIC=1
 ENV RUSTFLAGS="-C target-feature=+crt-static"
-RUN rustup target add x86_64-unknown-linux-gnu \
-    cargo install cargo-chef
+RUN cargo install cargo-chef
 WORKDIR /zeabot
 
 FROM chef as planner
