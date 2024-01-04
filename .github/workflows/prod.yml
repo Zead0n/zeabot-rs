@@ -23,7 +23,7 @@ jobs:
 
     - name: Build and test code
       run: |
-        RUSTFLAGS="-C target-feature=+crt-static" cargo build --verbose
+        cargo build --verbose
         cargo test --verbose
 
     - name: Build and push Docker images
