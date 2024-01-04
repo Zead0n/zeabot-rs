@@ -83,3 +83,5 @@ jobs:
           docker-compose down
           docker-compose pull
           docker-compose up -e DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }} -d
+
+# Commit test
