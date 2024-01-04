@@ -5,13 +5,12 @@ on:
     branches:
       - main
 
-env:
-  LIBOPUS_STATIC: 1
-  RUSTFLAGS: "-C target-feature=+crt-static"
-
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      LIBOPUS_STATIC: 1
+      RUSTFLAGS: "-C target-feature=+crt-static"
 
     steps:
     - name: Checkout code
