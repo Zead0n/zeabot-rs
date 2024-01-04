@@ -1,0 +1,78 @@
+name: Build and Deploy to server
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  LIBOPUS_STATIC: 1
+  RUSTFLAGS: "-C target-feature=+crt-static"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Install Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: stable
+
+    - name: Build and test code
+      run: |
+        cargo build --verbose
+        cargo test --verbose
+
+    - name: Build and push Docker images
+      uses: mr-smithers-excellent/docker-build-push@v4
+      with: 
+        image: zead0n/zeabot
+        registry: docker.io
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Chckout code
+      uses: actions/checkout@v2
+
+    - name: Login to Docker Hub
+      uses: docker/login-actions@v1
+      with: 
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Install SSH Key
+      uses: shimataro/ssh-key-action@v2
+      with:
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        known_hosts: 'PLACEHOLDER'
+
+    - name: Add Known Hosts
+      run: ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+    - name: Install rsync
+      run: sudo apt-get rsync
+
+    - name: Copy compose.yml with rsync
+      run: rsync -avz compose.yml ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:~/Docker/zeabot-docker/
+
+    - name: Deploy
+      uses: appleboy/sshactions@master
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        script: |
+          cd ~/Docker/zeabot-docker
+          docker-compose down
+          docker-compose pull
+          docker-compose up -e DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }} -d

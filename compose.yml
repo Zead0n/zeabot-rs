@@ -1,0 +1,9 @@
+version: "3"
+services:
+  bot:
+    image: zead0n/zeabot
+    container_name: zeabot
+    restart: unless-stopped
+    build: 
+      context: .
+      dockerfile: Dockerfile

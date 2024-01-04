@@ -1,5 +1,5 @@
 [package]
-name = "zeadon-bot"
+name = "zeabot"
 version = "0.1.0"
 edition = "2021"
 
@@ -19,5 +19,4 @@ reqwest = "0.11.23"
 
 #Misc
 symphonia = { version = "0.5.3", features = ["aac", "alac", "mp3"] }
-
-dotenv = "0.15.0"
+openssl = { version = "0.10", features = ["vendored"] }
