@@ -80,8 +80,8 @@ jobs:
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         script: |
           cd ~/Docker/zeabot-docker
-          docker-compose down
-          docker-compose pull
-          docker-compose up -e DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }} -d
+          docker compose down
+          docker compose pull
+          docker compose up -e DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }} -d
 
 # Commit test #2
