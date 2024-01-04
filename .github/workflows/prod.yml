@@ -10,7 +10,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       LIBOPUS_STATIC: 1
-      RUSTFLAGS: -Ctarget-feature=+crt-static
 
     steps:
     - name: Checkout code
@@ -24,7 +23,7 @@ jobs:
 
     - name: Build and test code
       run: |
-        cargo build --verbose
+        RUSTFLAGS="-C target-feature=+crt-static" cargo build --verbose
         cargo test --verbose
 
     - name: Build and push Docker images
