@@ -33,6 +33,10 @@ pub async fn url(
       }
    }
 
+   if let Err(e) = ctx.say("Successfully found a track").await {
+      panic!("Error sending successful found: {:?}", e);
+   }
+
    Ok(())
 }
 
@@ -42,10 +46,6 @@ async fn queue_up(ctx: Context<'_>, url: String, handler: Arc<Mutex<Call>>) -> S
    let src = YoutubeDl::new(http_client, url);
 
    handler_lock.enqueue_input(src.into()).await;
-
-   if let Err(e) = ctx.say("Successfully found a track").await {
-      panic!("Failed to send success play notice: {:?}", e);
-   }
 
    Ok(())
 }
