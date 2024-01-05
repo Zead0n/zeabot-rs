@@ -1,9 +1,10 @@
 use std::sync::Arc;
 use serenity::prelude::Mutex;
-use songbird::input::YoutubeDl;
+use songbird::input::{YoutubeDl, Compose};
 use songbird::Call;
 
 use crate::{Context, StdResult, commands};
+use crate::bot::HttpKey;
 
 #[poise::command(slash_command)]
 pub async fn play(
@@ -41,11 +42,23 @@ pub async fn url(
 }
 
 async fn queue_up(ctx: Context<'_>, url: String, handler: Arc<Mutex<Call>>) -> StdResult<()> {
-   let http_client = ctx.data().http_key.clone();
+   let http_client = {
+      let data = ctx.serenity_context().data.read().await;
+      data.get::<HttpKey>()
+          .cloned()
+          .expect("Guaranteed to exist in the typemap.")
+  };
    let mut handler_lock = handler.lock().await;
    let src = YoutubeDl::new(http_client, url);
+   let track_name = src.clone().aux_metadata().await?.track.unwrap();
+   let mut queue = ctx.data().track_queue.lock().await;
+   queue.push(track_name.clone());
 
    handler_lock.enqueue_input(src.into()).await;
+
+   if let Err(e) = ctx.say(format!("Successfully found a track: {}", track_name)).await {
+      panic!("Error sending successful found: {:?}", e);
+   }
 
    Ok(())
 }

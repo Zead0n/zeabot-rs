@@ -1,3 +1,4 @@
+use serenity::prelude::Mutex;
 use poise::{FrameworkOptions, Framework};
 use poise::serenity_prelude as serenity;
 use songbird::serenity::SerenityInit;
@@ -6,8 +7,14 @@ use reqwest::Client as HttpClient;
 use crate::{StdError, StdResult};
 use crate::{error, commands};
 
+pub struct HttpKey;
+
+impl serenity::prelude::TypeMapKey for HttpKey {
+    type Value = HttpClient;
+}
+
 pub struct Data {
-    pub http_key: HttpClient
+    pub track_queue: Mutex<Vec<String>>,
 }
 
 pub fn load_options() -> FrameworkOptions<Data, StdError> {
@@ -25,7 +32,7 @@ pub async fn load_bot(options: FrameworkOptions<Data, StdError>) -> StdResult<se
             println!("Logged in as {}", _ready.user.name);
             poise::builtins::register_globally(ctx, &framework.options().commands).await?;
             Ok(Data {
-                http_key: HttpClient::new(),
+                track_queue: Mutex::new(Vec::new()),
             })
         })
     });
@@ -48,6 +55,7 @@ pub async fn load_bot(options: FrameworkOptions<Data, StdError>) -> StdResult<se
     Ok(serenity::Client::builder(discord_token, intents)
         .framework(framework)
         .register_songbird()
+        .type_map_insert::<HttpKey>(HttpClient::new())
         .await
         .expect("Failed creating discord client"))
 }

@@ -1,6 +1,5 @@
 mod bot;
 mod commands;
-mod command;
 mod error;
 
 use tokio;

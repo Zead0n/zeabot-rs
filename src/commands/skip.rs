@@ -8,7 +8,9 @@ pub async fn skip(
     if let Some(handler) = commands::handler_exist(ctx).await {
         let handler_lock = handler.lock().await;
         let queue = handler_lock.queue();
-        let _bruh = queue.skip();
+        if let Err(e) = queue.skip() {
+            panic!("Error skipping current track: {:?}", e);
+        }
 
         if let Err(e) = ctx.say("Skipped current track").await {
             panic!("Error sending skipped track: {:?}", e);
