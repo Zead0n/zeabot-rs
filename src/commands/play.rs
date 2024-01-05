@@ -51,8 +51,8 @@ async fn queue_up(ctx: Context<'_>, url: String, handler: Arc<Mutex<Call>>) -> S
    let mut handler_lock = handler.lock().await;
    let src = YoutubeDl::new(http_client, url);
    let track_name = src.clone().aux_metadata().await?.title.unwrap();
-   let mut queue = ctx.data().track_queue.lock().await;
-   queue.push(track_name.clone());
+   // let mut queue = ctx.data().track_queue.lock().await;
+   // queue.push(track_name.clone());
 
    handler_lock.enqueue_input(src.into()).await;
 

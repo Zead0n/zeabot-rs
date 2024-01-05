@@ -1,4 +1,4 @@
-use serenity::prelude::Mutex;
+// use serenity::prelude::Mutex;
 use poise::{FrameworkOptions, Framework};
 use poise::serenity_prelude as serenity;
 use songbird::serenity::SerenityInit;
@@ -14,7 +14,7 @@ impl serenity::prelude::TypeMapKey for HttpKey {
 }
 
 pub struct Data {
-    pub track_queue: Mutex<Vec<String>>,
+    // pub track_queue: Mutex<Vec<String>>,
 }
 
 pub fn load_options() -> FrameworkOptions<Data, StdError> {
@@ -32,7 +32,7 @@ pub async fn load_bot(options: FrameworkOptions<Data, StdError>) -> StdResult<se
             println!("Logged in as {}", _ready.user.name);
             poise::builtins::register_globally(ctx, &framework.options().commands).await?;
             Ok(Data {
-                track_queue: Mutex::new(Vec::new()),
+                // track_queue: Mutex::new(Vec::new()),
             })
         })
     });
