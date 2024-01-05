@@ -1,34 +1,14 @@
+use std::sync::Arc;
+use serenity::prelude::Mutex;
 use songbird::input::YoutubeDl;
+use songbird::Call;
 
 use crate::{Context, StdResult, commands};
 
 #[poise::command(slash_command)]
 pub async fn play(
    ctx: Context<'_>,
-   //#[description = "Enter a URL"] url: String
 ) -> StdResult<()> {
-   // let _do_search = !url.starts_with("http");
-   // let guild_id = ctx.guild_id().unwrap();
-   // let http_client = ctx.data().http_key.clone();
-   // let manager = songbird::get(ctx.serenity_context())
-   //    .await
-   //    .expect("Songbird Voice client placed in at initialisation.")
-   //    .clone();
-
-   // if let Some(handler_lock) = manager.get(guild_id) {
-   //    let mut handler = handler_lock.lock().await;
-   //    let src = YoutubeDl::new(http_client, url);
-
-   //    let _ = handler.play_input(src.clone().into());
-   //    if let Err(e) = ctx.say("Successfully found a track").await {
-   //       panic!("Failed to send success play notice: {:?}", e);
-   //    }
-   // } else {
-   //    if let Err(e) = ctx.say("I ain't here (need to be in VC)").await {
-   //       panic!("Failed to send error play notice: {:?}", e);
-   //    }
-   // }
-
    if let Err(e) = ctx.say("Should require subsommand").await {
       panic!("Failed send play is subcommand nitification: {:?}", e);
    }
@@ -42,34 +22,29 @@ pub async fn url(
    ctx: Context<'_>,
    #[description = "Enter a URL"] url: String
 ) -> StdResult<()> {
-   let guild_id = ctx.guild_id().unwrap();
-   let has_handler = commands::handler_exist(ctx, guild_id).await?;
-
-   if !has_handler {
-      if let Err(e) = commands::join_channel(ctx).await {
-         panic!("Failed to join with '/play url': {:?}", e);
-      }
-   }
-   
-   let _do_search = !url.starts_with("http");
-   let http_client = ctx.data().http_key.clone();
-   let manager = songbird::get(ctx.serenity_context())
-      .await
-      .expect("Songbird Voice client placed in at initialisation.")
-      .clone();
-
-   if let Some(handler_lock) = manager.get(guild_id) {
-      let mut handler = handler_lock.lock().await;
-      let src = YoutubeDl::new(http_client, url);
-
-      let _ = handler.play_input(src.clone().into());
-      if let Err(e) = ctx.say("Successfully found a track").await {
-         panic!("Failed to send success play notice: {:?}", e);
+   if let Some(handler) = commands::handler_exist(ctx).await {
+      if let Err(e) = queue_up(ctx, url, handler).await {
+         panic!("Error queuing music: {:?}", e);
       }
    } else {
-      if let Err(e) = ctx.say("I ain't here (need to be in VC)").await {
-         panic!("Failed to send error play notice: {:?}", e);
+      let new_handler = commands::join_channel(ctx).await?;
+      if let Err(e) = queue_up(ctx, url, new_handler).await {
+         panic!("Error queuing music from joining: {:?}", e);
       }
+   }
+
+   Ok(())
+}
+
+async fn queue_up(ctx: Context<'_>, url: String, handler: Arc<Mutex<Call>>) -> StdResult<()> {
+   let http_client = ctx.data().http_key.clone();
+   let mut handler_lock = handler.lock().await;
+   let src = YoutubeDl::new(http_client, url);
+
+   handler_lock.enqueue_input(src.into()).await;
+
+   if let Err(e) = ctx.say("Successfully found a track").await {
+      panic!("Failed to send success play notice: {:?}", e);
    }
 
    Ok(())
