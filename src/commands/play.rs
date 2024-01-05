@@ -34,14 +34,14 @@ pub async fn url(
       }
    }
 
-   if let Err(e) = ctx.say("Successfully found a track").await {
-      panic!("Error sending successful found: {:?}", e);
-   }
-
    Ok(())
 }
 
 async fn queue_up(ctx: Context<'_>, url: String, handler: Arc<Mutex<Call>>) -> StdResult<()> {
+   if let Err(e) = ctx.defer().await {
+      panic!("Failed to defer song addition: {:?}", e);
+   }
+
    let http_client = {
       let data = ctx.serenity_context().data.read().await;
       data.get::<HttpKey>()
@@ -50,13 +50,13 @@ async fn queue_up(ctx: Context<'_>, url: String, handler: Arc<Mutex<Call>>) -> S
   };
    let mut handler_lock = handler.lock().await;
    let src = YoutubeDl::new(http_client, url);
-   let track_name = src.clone().aux_metadata().await?.track.unwrap();
+   let track_name = src.clone().aux_metadata().await?.title.unwrap();
    let mut queue = ctx.data().track_queue.lock().await;
    queue.push(track_name.clone());
 
    handler_lock.enqueue_input(src.into()).await;
 
-   if let Err(e) = ctx.say(format!("Successfully found a track: {}", track_name)).await {
+   if let Err(e) = ctx.say(format!("Successfully found: {}", track_name)).await {
       panic!("Error sending successful found: {:?}", e);
    }
 

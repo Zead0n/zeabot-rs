@@ -57,7 +57,7 @@ pub fn get_commands() -> Vec<poise::Command<Data, StdError>> {
          ..play::play()
       },
       skip::skip(),
-      queue::queue(),
+      // queue::queue(),
    ]
 }
 
