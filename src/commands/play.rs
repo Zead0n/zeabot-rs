@@ -41,7 +41,7 @@ pub async fn url(
 // Search a title (WIP)
 #[poise::command(slash_command)]
 pub async fn search(
-   ctx: Context<'_>,
+   _ctx: Context<'_>,
    #[description = "Enter a title"] title: String
 ) -> StdResult<()> {
    let search_result = YoutubeDl::search_for(&SearchOptions::youtube(title).with_count(5))
@@ -79,7 +79,7 @@ async fn queue_up(ctx: Context<'_>, url: String, handler: Arc<Mutex<Call>>) -> S
    // let src = SongbirdDl::new(http_client, url);
    match test {
       YoutubeDlOutput::SingleVideo(video) => {
-         let src = SongbirdDl::new(http_client, video.url.expect("No url found"));
+         let src = SongbirdDl::new(http_client.clone(), video.url.expect("No url found"));
          handler_lock.enqueue_input(src.into()).await;
          
          let video_respone = format!("**Successfully added track:** {}", video.title.expect("No title for video"));
@@ -93,10 +93,10 @@ async fn queue_up(ctx: Context<'_>, url: String, handler: Arc<Mutex<Call>>) -> S
             return Ok(());
          }
 
-         let video_list: Vec<String> = Vec::new();
+         let mut video_list: Vec<String> = Vec::new();
          for video in videos {
             video_list.push(format!("\n{}",video.title.expect("No title for video")));
-            let src = SongbirdDl::new(http_client, video.url.expect("No url found"));
+            let src = SongbirdDl::new(http_client.clone(), video.url.expect("No url found"));
             handler_lock.enqueue_input(src.into()).await;
          }
 
