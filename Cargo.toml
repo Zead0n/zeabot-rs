@@ -18,6 +18,6 @@ songbird = { version = "0.4.0", features = ["driver", "gateway", "builtin-queue"
 reqwest = "0.11.23"
 
 #Misc
-youtube_dl = "0.9.0"
+youtube_dl = { version = "0.9.0", features = ["tokio"] }
 symphonia = { version = "0.5.3", features = ["aac", "alac", "mp3"] }
 openssl = { version = "0.10", features = ["vendored"] }

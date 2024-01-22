@@ -7,14 +7,19 @@ mod skip;
 
 // Miscellaneous/Global functions & structs
 use std::sync::Arc;
+use youtube_dl::YoutubeDlOutput;
 use serenity::prelude::Mutex;
 use serenity::all::GuildId;
 use songbird::Call;
+use songbird::input::YoutubeDl as SongbirdDl;
 use songbird::events::{Event, EventContext, EventHandler as VoiceEventHandler, TrackEvent};
 use poise::async_trait;
+use reqwest::Client as HttpClient;
 
 use crate::bot::Data;
 use crate::{StdError, StdResult, Context};
+
+const YOUTUBE_DLP: &str = "yt-dlp";
 
 struct TrackErrorNotifier {
    _guild_id: GuildId,
@@ -44,6 +49,7 @@ impl VoiceEventHandler for TrackErrorNotifier {
    }
 }
 
+// Return the list of commands to be registered
 pub fn get_commands() -> Vec<poise::Command<Data, StdError>> {
    vec![
       help::help(),
@@ -61,6 +67,7 @@ pub fn get_commands() -> Vec<poise::Command<Data, StdError>> {
    ]
 }
 
+// Check if handler exists and return it if it does
 pub async fn handler_exist(ctx: Context<'_>) -> Option<Arc<Mutex<Call>>> {
    let guild_id = ctx.guild_id().unwrap();
    let manager = songbird::get(ctx.serenity_context())
@@ -72,6 +79,7 @@ pub async fn handler_exist(ctx: Context<'_>) -> Option<Arc<Mutex<Call>>> {
    has_handler
 }
 
+// Join a channel and return the handler
 pub async fn join_channel(ctx: Context<'_>) -> StdResult<Arc<Mutex<Call>>> {
    let (guild_id, channel_id) = {
       let guild = ctx.guild().expect("Couldn't get guild for join_channel");
@@ -105,4 +113,11 @@ pub async fn join_channel(ctx: Context<'_>) -> StdResult<Arc<Mutex<Call>>> {
    handler.lock().await.add_global_event(TrackEvent::Error.into(), TrackErrorNotifier::new(guild_id));
 
    Ok(handler)
+}
+
+// Discord check message 
+pub fn check_message(result: Result<poise::reply::ReplyHandle, poise::serenity_prelude::Error>) {
+   if let Err(e) = result {
+      panic!("Error sending check message: {:?}", e)
+   }
 }
