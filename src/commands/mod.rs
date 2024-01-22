@@ -58,6 +58,7 @@ pub fn get_commands() -> Vec<poise::Command<Data, StdError>> {
       poise::Command {
          subcommands: vec![
             play::url(),
+            play::search(),
          ],
          subcommand_required: true,
          ..play::play()
