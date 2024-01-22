@@ -7,14 +7,14 @@ mod skip;
 
 // Miscellaneous/Global functions & structs
 use std::sync::Arc;
-use youtube_dl::YoutubeDlOutput;
+// use youtube_dl::YoutubeDlOutput;
 use serenity::prelude::Mutex;
 use serenity::all::GuildId;
 use songbird::Call;
-use songbird::input::YoutubeDl as SongbirdDl;
+// use songbird::input::YoutubeDl as SongbirdDl;
 use songbird::events::{Event, EventContext, EventHandler as VoiceEventHandler, TrackEvent};
 use poise::async_trait;
-use reqwest::Client as HttpClient;
+// use reqwest::Client as HttpClient;
 
 use crate::bot::Data;
 use crate::{StdError, StdResult, Context};

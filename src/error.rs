@@ -1,4 +1,4 @@
-use crate::{StdResult, StdError, Context};
+use crate::StdError;
 use crate::bot::Data;
 
 pub async fn on_error(error: poise::FrameworkError<'_, Data, StdError>) {

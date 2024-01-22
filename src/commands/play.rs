@@ -1,6 +1,6 @@
 use std::sync::Arc;
 use serenity::prelude::Mutex;
-use songbird::input::{YoutubeDl as SongbirdDl, Compose};
+use songbird::input::YoutubeDl as SongbirdDl;
 use youtube_dl::{SearchOptions, YoutubeDl, YoutubeDlOutput};
 use songbird::Call;
 
@@ -51,8 +51,14 @@ pub async fn search(
       .await?;
 
    match search_result {
-      YoutubeDlOutput::SingleVideo(_) => println!("SingleVideo"),
-      YoutubeDlOutput::Playlist(_) => println!("Playlist"),
+      YoutubeDlOutput::SingleVideo(_) => {
+         println!("SingleVideo");
+         Ok(())
+      },
+      YoutubeDlOutput::Playlist(_) => {
+         println!("Playlist");
+         Ok(())
+      },
    }
 }
 
@@ -73,28 +79,28 @@ async fn queue_up(ctx: Context<'_>, url: String, handler: Arc<Mutex<Call>>) -> S
    // let src = SongbirdDl::new(http_client, url);
    match test {
       YoutubeDlOutput::SingleVideo(video) => {
-         let src = SongbirdDl::new(http_client, video.url);
+         let src = SongbirdDl::new(http_client, video.url.expect("No url found"));
          handler_lock.enqueue_input(src.into()).await;
          
          let video_respone = format!("**Successfully added track:** {}", video.title.expect("No title for video"));
-         commands::check_message(ctx.say(video_respone));
+         commands::check_message(ctx.say(video_respone).await);
       },
       YoutubeDlOutput::Playlist(playlist) => {
          let videos = playlist.entries.expect("Failed to get videos of playlist");
          if videos.len() >= 10 {
             commands::check_message(ctx.say("Sorry, don't take playlists with 10 videos or more\n(This is experimental)").await);
 
-            Ok(())
+            return Ok(());
          }
 
          let video_list: Vec<String> = Vec::new();
          for video in videos {
             video_list.push(format!("\n{}",video.title.expect("No title for video")));
-            let src = SongbirdDl::new(http_client, video.url);
+            let src = SongbirdDl::new(http_client, video.url.expect("No url found"));
             handler_lock.enqueue_input(src.into()).await;
          }
 
-         let playlist_respone = format!("**Successfully added playlist:** {}\n**__Added tracks :__** {}", playlist.title.expect("No title for playlist"), video_list);
+         let playlist_respone = format!("**Successfully added playlist:** {}\n**__Added tracks :__** {:?}", playlist.title.expect("No title for playlist"), video_list);
          commands::check_message(ctx.say(playlist_respone).await);
       }
    }
