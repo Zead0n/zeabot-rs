@@ -1,8 +1,14 @@
 use std::sync::Arc;
+use std::collections::HashMap;
+use std::time::Duration;
+use ::serenity::builder::CreateButton;
+use ::serenity::futures::StreamExt;
 use serenity::prelude::Mutex;
 use songbird::input::YoutubeDl as SongbirdDl;
-use youtube_dl::{SearchOptions, YoutubeDl, YoutubeDlOutput};
 use songbird::Call;
+pub use poise::serenity_prelude as serenity;
+use poise::reply::CreateReply;
+use youtube_dl::{SearchOptions, YoutubeDl, YoutubeDlOutput, SingleVideo};
 
 use crate::{Context, StdResult, commands};
 use crate::bot::HttpKey;
@@ -41,9 +47,56 @@ pub async fn url(
 // Search a title (WIP)
 #[poise::command(slash_command)]
 pub async fn search(
-   _ctx: Context<'_>,
+   ctx: Context<'_>,
    #[description = "Enter a title"] title: String
 ) -> StdResult<()> {
+   if let Some(handler) = commands::handler_exist(ctx).await {
+      if let Err(e) = search_up(ctx, title, handler).await {
+         panic!("Error queuing music: {:?}", e);
+      }
+   } else {
+      let new_handler = commands::join_channel(ctx).await?;
+      if let Err(e) = search_up(ctx, title, new_handler).await {
+         panic!("Error queuing music from joining: {:?}", e);
+      }
+   }
+
+   Ok(())
+
+
+   // let search_result = YoutubeDl::search_for(&SearchOptions::youtube(title).with_count(5))
+   //    .socket_timeout("20")
+   //    .extract_audio(true)
+   //    .run_async()
+   //    .await?;
+
+   // match search_result {
+   //    YoutubeDlOutput::Playlist(playlist) => {
+   //       let mut search_map: HashMap<u8, SingleVideo> = HashMap::new();
+   //       // let mut search_map = ctx.data().search.lock().await;
+   //       // let mut search_list = String::new();
+   //       let mut index = 1;
+   //       let mut input_index = index;
+
+   //       for video in playlist.entries.expect("Failed to get videos of playlist") {
+   //          search_map.insert(index, video);
+   //          index += 1;
+   //       }
+
+   //       if let Err(e) = search_embed(ctx, search_map, &mut input_index).await {
+   //          panic!("Error creating search embed: {:?}", e);
+   //       }
+
+   //       Ok(())
+   //    },
+   //    _ => {
+   //       println!("Something went wrong?");
+   //       Ok(())
+   //    }
+   // }
+}
+
+async fn search_up(ctx: Context<'_>, title: String, handler: Arc<Mutex<Call>>) -> StdResult<()> {
    let search_result = YoutubeDl::search_for(&SearchOptions::youtube(title).with_count(5))
       .socket_timeout("20")
       .extract_audio(true)
@@ -51,15 +104,111 @@ pub async fn search(
       .await?;
 
    match search_result {
-      YoutubeDlOutput::SingleVideo(_) => {
-         println!("SingleVideo");
+      YoutubeDlOutput::Playlist(playlist) => {
+         let mut search_map: HashMap<u8, SingleVideo> = HashMap::new();
+         // let mut search_map = ctx.data().search.lock().await;
+         // let mut search_list = String::new();
+         let mut index = 1;
+
+         for video in playlist.entries.expect("Failed to get videos of playlist") {
+            search_map.insert(index, video);
+            index += 1;
+         }
+         index = 1;
+
+         if let Err(e) = search_init(ctx, search_map, &mut index, handler).await {
+            panic!("Error creating search embed: {:?}", e);
+         }
+
          Ok(())
       },
-      YoutubeDlOutput::Playlist(_) => {
-         println!("Playlist");
+      _ => {
+         println!("Something went wrong?");
          Ok(())
-      },
+      }
    }
+
+}
+
+async fn search_init(ctx: Context<'_>, search: HashMap<u8, SingleVideo>, index: &mut u8, handler: Arc<Mutex<Call>>) -> StdResult<()> {
+   if let Ok(reply) = &ctx.send(search_msg(search.clone(), index).into()).await {
+      let msg = reply.message().await?;
+      let mut interaction_stream = msg
+         .clone()
+         .await_component_interaction(&ctx.serenity_context().shard)
+         .timeout(Duration::from_secs(60 * 2))
+         .stream();
+      while let Some(interaction) = interaction_stream.next().await {
+         let custom_id = interaction.data.custom_id.as_str();
+         match custom_id {
+            "up" => {
+               if *index < 5 {
+                  *index += 1;
+               } else {
+                  *index = 1;
+               }
+
+               if let Err(e) = interaction.edit_response(
+                  &ctx, 
+                  search_msg(search.clone(), index).to_slash_initial_response_edit(serenity::EditInteractionResponse::new())
+               ).await{
+                  panic!("I'm too tired: {:?}",e);
+               }
+            }
+            "down" => {
+               if *index > 1 {
+                  *index -= 1;
+               } else {
+                  *index = 5
+               }
+
+               if let Err(e) = interaction.edit_response(
+                  &ctx,
+                  search_msg(search.clone(), index).to_slash_initial_response_edit(serenity::EditInteractionResponse::new())
+               ).await{
+                  panic!("I'm too tired: {:?}",e);
+               }
+            }
+            "select" => {
+               let video = search.get(&index).expect("No video found in search").to_owned();
+               let http_client = {
+                  let data = ctx.serenity_context().data.read().await;
+                  data.get::<HttpKey>()
+                     .cloned()
+                     .expect("Guaranteed to exist in the typemap.")
+               };
+               let src = SongbirdDl::new(http_client.clone(), video.url.expect("No url found"));
+               let mut handler_lock = handler.lock().await;
+               handler_lock.enqueue_input(src.into()).await;
+               
+               let video_respone = format!("**Successfully added track:** {}", video.title.expect("No title for video"));
+               commands::check_message(ctx.say(video_respone).await);
+            }
+            _ => println!("Unknow custom_id")
+         }
+      }
+   }
+
+   Ok(())
+}
+
+pub fn search_msg(search: HashMap<u8, SingleVideo>, index: &mut u8) -> CreateReply {
+   let mut search_list = String::new();
+   for (k, v) in search.clone().into_iter() {
+      if k == *index {
+         search_list.push_str(format!("→{}. {}\n", k, v.title.expect("No title for video")).as_str());
+      } else {
+         search_list.push_str(format!(" {}. {}\n", k, v.title.expect("No title for video")).as_str());
+      }
+   }
+
+   let embed = serenity::CreateEmbed::new().title("Search result").color((255, 0, 0)).field("Found tracks:", search_list, false);
+   let mut button_vec = Vec::new();
+   button_vec.push(CreateButton::new("up").emoji('\u{fe0f}').style(serenity::ButtonStyle::Primary));
+   button_vec.push(CreateButton::new("down").emoji('\u{fe0f}').style(serenity::ButtonStyle::Primary));
+   button_vec.push(CreateButton::new("select").emoji('🎵').style(serenity::ButtonStyle::Success));
+
+   CreateReply::embed(CreateReply::default(), embed).components(vec![serenity::CreateActionRow::Buttons(button_vec)])
 }
 
 async fn queue_up(ctx: Context<'_>, url: String, handler: Arc<Mutex<Call>>) -> StdResult<()> {
@@ -93,14 +242,14 @@ async fn queue_up(ctx: Context<'_>, url: String, handler: Arc<Mutex<Call>>) -> S
             return Ok(());
          }
 
-         let mut video_list: Vec<String> = Vec::new();
+         let mut video_list = String::new();
          for video in videos {
-            video_list.push(format!("\n{}",video.title.expect("No title for video")));
+            video_list.push_str(format!("\n{}",video.title.expect("No title for video")).as_str());
             let src = SongbirdDl::new(http_client.clone(), video.url.expect("No url found"));
             handler_lock.enqueue_input(src.into()).await;
          }
 
-         let playlist_respone = format!("**Successfully added playlist:** {}\n**__Added tracks :__** {:?}", playlist.title.expect("No title for playlist"), video_list);
+         let playlist_respone = format!("**Successfully added playlist:** {}\n**__Added tracks :__** {}", playlist.title.expect("No title for playlist"), video_list);
          commands::check_message(ctx.say(playlist_respone).await);
       }
    }
@@ -111,3 +260,4 @@ async fn queue_up(ctx: Context<'_>, url: String, handler: Arc<Mutex<Call>>) -> S
 
    Ok(())
 }
+

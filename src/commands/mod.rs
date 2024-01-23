@@ -1,32 +1,27 @@
-mod help;
-mod join;
-mod leave;
-mod play;
-mod queue;
-mod skip;
+pub mod join;
+pub mod leave;
+pub mod play;
+pub mod queue;
+pub mod skip;
+pub mod help;
 
 // Miscellaneous/Global functions & structs
 use std::sync::Arc;
-// use youtube_dl::YoutubeDlOutput;
 use serenity::prelude::Mutex;
 use serenity::all::GuildId;
 use songbird::Call;
-// use songbird::input::YoutubeDl as SongbirdDl;
 use songbird::events::{Event, EventContext, EventHandler as VoiceEventHandler, TrackEvent};
 use poise::async_trait;
-// use reqwest::Client as HttpClient;
 
 use crate::bot::Data;
 use crate::{StdError, StdResult, Context};
-
-const YOUTUBE_DLP: &str = "yt-dlp";
 
 struct TrackErrorNotifier {
    _guild_id: GuildId,
 }
 
 impl TrackErrorNotifier {
-   fn new(guild_id: GuildId) -> Self {
+   fn new(_ctx: Context<'_>, guild_id: GuildId) -> Self {
       TrackErrorNotifier {
          _guild_id: guild_id,
       }
@@ -91,6 +86,8 @@ pub async fn join_channel(ctx: Context<'_>) -> StdResult<Arc<Mutex<Call>>> {
    let connect_to = match channel_id {
       Some(channel) => channel,
       None => {
+         check_message(ctx.say("Where you at?").await);
+
          panic!("Couldn't get channel id");
       },
    };
@@ -100,18 +97,18 @@ pub async fn join_channel(ctx: Context<'_>) -> StdResult<Arc<Mutex<Call>>> {
       .expect("Songbird Voice client placed in at initialisation.")
       .clone();
 
-   if let Ok(handler_lock) = manager.join(guild_id, connect_to).await {
-      // Attach an event handler to see notifications of all track errors.
-      let mut handler = handler_lock.lock().await;
-      handler.add_global_event(TrackEvent::Error.into(), TrackErrorNotifier::new(guild_id));
-   }
+   // if let Ok(handler_lock) = manager.join(guild_id, connect_to).await {
+   //    // Attach an event handler to see notifications of all track errors.
+   //    let mut handler = handler_lock.lock().await;
+   //    handler.add_global_event(TrackEvent::Error.into(), TrackErrorNotifier::new(guild_id));
+   // }
 
    let handler = match manager.join(guild_id, connect_to).await {
       Ok(handler) => handler,
       Err(e) => panic!("Bruh: {:?}", e),
    };
 
-   handler.lock().await.add_global_event(TrackEvent::Error.into(), TrackErrorNotifier::new(guild_id));
+   handler.lock().await.add_global_event(TrackEvent::Error.into(), TrackErrorNotifier::new(ctx.clone(), guild_id));
 
    Ok(handler)
 }

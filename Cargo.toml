@@ -11,7 +11,7 @@ tokio = { version = "1.35.1", features=["full"] }
 
 #Discord
 serenity = { version = "0.12.0", default-features = false, features = ["client", "gateway", "rustls_backend", "model", "cache", "voice"] }
-poise = "0.6.1-rc1" #Outdated for now
+poise = "0.6.1" #Outdated for now
 songbird = { version = "0.4.0", features = ["driver", "gateway", "builtin-queue"] }
 
 #Web
