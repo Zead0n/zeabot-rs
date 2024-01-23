@@ -112,6 +112,7 @@ async fn search_init(ctx: Context<'_>, search: HashMap<u8, SingleVideo>, index: 
          .await_component_interaction(&ctx.serenity_context().shard)
          .timeout(Duration::from_secs(60 * 2))
          .stream();
+      println!("Waiting for interaction");
       while let Some(interaction) = interaction_stream.next().await {
          let custom_id = interaction.data.custom_id.as_str();
          match custom_id {
@@ -177,12 +178,14 @@ pub fn search_msg(search: HashMap<u8, SingleVideo>, index: &mut u8) -> CreateRep
          search_list.push_str(format!(" {}. {}\n", k, v.title.expect("No title for video")).as_str());
       }
    }
+   println!("Formated selection");
 
    let embed = serenity::CreateEmbed::new().title("Search result").color((255, 0, 0)).field("Found tracks:", search_list, false);
    let mut button_vec = Vec::new();
    button_vec.push(CreateButton::new("up").emoji('\u{fe0f}').style(serenity::ButtonStyle::Primary));
    button_vec.push(CreateButton::new("down").emoji('\u{fe0f}').style(serenity::ButtonStyle::Primary));
    button_vec.push(CreateButton::new("select").emoji('🎵').style(serenity::ButtonStyle::Success));
+   println!("Made Embed and Buttons");
 
    CreateReply::embed(CreateReply::default(), embed).components(vec![serenity::CreateActionRow::Buttons(button_vec)])
 }
