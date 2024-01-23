@@ -77,7 +77,7 @@ async fn search_up(ctx: Context<'_>, title: String, handler: Arc<Mutex<Call>>) -
 
    match search_result {
       YoutubeDlOutput::Playlist(playlist) => {
-         let search_vec: Vec<(u8, SingleVideo)> = Vec::new();
+         let mut search_vec: Vec<(u8, SingleVideo)> = Vec::new();
          let mut index = 1;
 
          for video in playlist.entries.expect("Failed to get videos of playlist") {
