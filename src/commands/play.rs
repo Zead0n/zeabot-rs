@@ -251,9 +251,9 @@ pub fn search_msg(search: HashMap<u8, SingleVideo>, index: &mut u8) -> StdResult
 
    let embed = serenity::CreateEmbed::new().title("Search result").color((255, 0, 0)).field("Found tracks:", search_list, false);
    let mut button_vec = Vec::new();
-   button_vec.push(CreateButton::new("up").emoji('\u{fe0f}').style(serenity::ButtonStyle::Primary));
-   button_vec.push(CreateButton::new("down").emoji('\u{fe0f}').style(serenity::ButtonStyle::Primary));
-   button_vec.push(CreateButton::new("select").emoji('🎵').style(serenity::ButtonStyle::Success));
+   button_vec.push(CreateButton::new("up").emoji(serenity::ReactionType::Unicode("U+2191".to_string())).style(serenity::ButtonStyle::Primary));
+   button_vec.push(CreateButton::new("down").emoji(serenity::ReactionType::Unicode("U+2193".to_string())).style(serenity::ButtonStyle::Primary));
+   button_vec.push(CreateButton::new("select").emoji(serenity::ReactionType::Unicode("U+1F3B5".to_string())).style(serenity::ButtonStyle::Success));
    println!("Made Embed and Buttons");
 
    Ok(CreateReply::embed(CreateReply::default(), embed).components(vec![serenity::CreateActionRow::Buttons(button_vec)]))
