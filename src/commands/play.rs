@@ -250,13 +250,14 @@ pub fn search_msg(search: HashMap<u8, SingleVideo>, index: &mut u8) -> StdResult
    println!("Formated selection");
 
    let embed = serenity::CreateEmbed::new().title("Search result").color((255, 0, 0)).field("Found tracks:", search_list, false);
-   let mut button_vec = Vec::new();
-   button_vec.push(CreateButton::new("up").emoji(serenity::ReactionType::Unicode(":arrow_up:".to_string())).style(serenity::ButtonStyle::Primary));
-   button_vec.push(CreateButton::new("down").emoji(serenity::ReactionType::Unicode(":arrow_down:".to_string())).style(serenity::ButtonStyle::Primary));
-   button_vec.push(CreateButton::new("select").emoji(serenity::ReactionType::Unicode(":musical_note:".to_string())).style(serenity::ButtonStyle::Success));
+   let components = serenity::CreateActionRow::Buttons(vec![
+      CreateButton::new("up").emoji("⬆️".chars().next().unwrap()).style(serenity::ButtonStyle::Primary),
+      CreateButton::new("down").emoji("⬇️".chars().next().unwrap()).style(serenity::ButtonStyle::Primary),
+      CreateButton::new("select").emoji("🎵".chars().next().unwrap()).style(serenity::ButtonStyle::Success),
+   ]);
    println!("Made Embed and Buttons");
 
-   Ok(CreateReply::embed(CreateReply::default(), embed).components(vec![serenity::CreateActionRow::Buttons(button_vec)]))
+   Ok(CreateReply::embed(CreateReply::default(), embed).components(vec![components]))
 }
 
 async fn queue_up(ctx: Context<'_>, url: String, handler: Arc<Mutex<Call>>) -> StdResult<()> {
