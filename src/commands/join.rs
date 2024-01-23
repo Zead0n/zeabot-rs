@@ -9,5 +9,7 @@ pub async fn join(
       panic!("Failed to join with '/join': {:?}", e);
    }
 
+   commands::check_message(ctx.say("SUISEI WAAAAA").await);
+
    Ok(())
 }

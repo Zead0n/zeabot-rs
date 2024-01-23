@@ -77,18 +77,18 @@ async fn search_up(ctx: Context<'_>, title: String, handler: Arc<Mutex<Call>>) -
 
    match search_result {
       YoutubeDlOutput::Playlist(playlist) => {
-         let mut search_map: HashMap<u8, SingleVideo> = HashMap::new();
-         // let mut search_map = ctx.data().search.lock().await;
-         // let mut search_list = String::new();
+         let search_vec: Vec<(u8, SingleVideo)> = Vec::new();
          let mut index = 1;
 
          for video in playlist.entries.expect("Failed to get videos of playlist") {
-            search_map.insert(index, video);
+            search_vec.push((index, video));
             index += 1;
          }
-         index = 1;
+         search_vec.sort_by(|a, b| a.0.cmp(&b.0));
+         let search_map: HashMap<u8, SingleVideo> = search_vec.into_iter().collect();
+         
 
-         if let Err(e) = search_init(ctx, search_map, &mut index, handler).await {
+         if let Err(e) = search_init(ctx, search_map, &mut 1, handler).await {
             panic!("Error creating search embed: {:?}", e);
          }
 
@@ -168,68 +168,6 @@ async fn search_init(ctx: Context<'_>, search: HashMap<u8, SingleVideo>, index: 
       }
    }
 
-   // if let Ok(reply) = &ctx.send(search_msg(search.clone(), index).unwrap()).await {
-   //    let msg = reply.message().await?;
-   //    let mut interaction_stream = msg
-   //       .clone()
-   //       .await_component_interaction(&ctx.serenity_context().shard)
-   //       .timeout(Duration::from_secs(60 * 2))
-   //       .stream();
-   //    println!("Waiting for interaction");
-   //    while let Some(interaction) = interaction_stream.next().await {
-   //       let custom_id = interaction.data.custom_id.as_str();
-   //       match custom_id {
-   //          "up" => {
-   //             if *index < 5 {
-   //                *index += 1;
-   //             } else {
-   //                *index = 1;
-   //             }
-
-   //             if let Err(e) = interaction.edit_response(
-   //                &ctx, 
-   //                search_msg(search.clone(), index).unwrap().to_slash_initial_response_edit(serenity::EditInteractionResponse::new())
-   //             ).await{
-   //                panic!("I'm too tired: {:?}",e);
-   //             }
-   //          }
-   //          "down" => {
-   //             if *index > 1 {
-   //                *index -= 1;
-   //             } else {
-   //                *index = 5
-   //             }
-
-   //             if let Err(e) = interaction.edit_response(
-   //                &ctx,
-   //                search_msg(search.clone(), index).unwrap().to_slash_initial_response_edit(serenity::EditInteractionResponse::new())
-   //             ).await{
-   //                panic!("I'm too tired: {:?}",e);
-   //             }
-   //          }
-   //          "select" => {
-   //             let video = search.get(&index).expect("No video found in search").to_owned();
-   //             let http_client = {
-   //                let data = ctx.serenity_context().data.read().await;
-   //                data.get::<HttpKey>()
-   //                   .cloned()
-   //                   .expect("Guaranteed to exist in the typemap.")
-   //             };
-   //             let src = SongbirdDl::new(http_client.clone(), video.url.expect("No url found"));
-   //             let mut handler_lock = handler.lock().await;
-   //             handler_lock.enqueue_input(src.into()).await;
-               
-   //             println!("Track playing from search");
-   //             let video_respone = format!("**Successfully added track:** {}", video.title.expect("No title for video"));
-   //             commands::check_message(ctx.say(video_respone).await);
-   //          }
-   //          _ => println!("Unknow custom_id")
-   //       }
-   //    }
-   // } else {
-   //    panic!("Something wrong here then");
-   // }
-
    Ok(())
 }
 
@@ -267,7 +205,6 @@ async fn queue_up(ctx: Context<'_>, url: String, handler: Arc<Mutex<Call>>) -> S
    let test = YoutubeDl::new(url).socket_timeout("10").extract_audio(true).run_async().await?;
 
    let mut handler_lock = handler.lock().await;
-   // let src = SongbirdDl::new(http_client, url);
    match test {
       YoutubeDlOutput::SingleVideo(video) => {
          let src = SongbirdDl::new(http_client.clone(), video.url.expect("No url found"));
@@ -295,10 +232,6 @@ async fn queue_up(ctx: Context<'_>, url: String, handler: Arc<Mutex<Call>>) -> S
          commands::check_message(ctx.say(playlist_respone).await);
       }
    }
-   // let mut queue = ctx.data().track_queue.lock().await;
-   // queue.push(track_name.clone());
-
-   // handler_lock.enqueue_input(src.into()).await;
 
    Ok(())
 }
