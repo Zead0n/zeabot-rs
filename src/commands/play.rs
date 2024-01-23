@@ -75,7 +75,6 @@ async fn search_up(ctx: Context<'_>, title: String, handler: Arc<Mutex<Call>>) -
       .run_async()
       .await?;
 
-   println!("YoutubeDl search done");
    match search_result {
       YoutubeDlOutput::Playlist(playlist) => {
          let mut search_map: HashMap<u8, SingleVideo> = HashMap::new();
@@ -104,7 +103,6 @@ async fn search_up(ctx: Context<'_>, title: String, handler: Arc<Mutex<Call>>) -
 }
 
 async fn search_init(ctx: Context<'_>, search: HashMap<u8, SingleVideo>, index: &mut u8, handler: Arc<Mutex<Call>>) -> StdResult<()> {
-   println!("Search initiation started");
    let reply = match ctx.send(search_msg(search.clone(), index).unwrap()).await {
       Ok(reply) => reply,
       Err(e) => {
@@ -118,7 +116,6 @@ async fn search_init(ctx: Context<'_>, search: HashMap<u8, SingleVideo>, index: 
       .await_component_interaction(&ctx.serenity_context().shard)
       .timeout(Duration::from_secs(60 * 2))
       .stream();
-   println!("Waiting for interaction");
    while let Some(interaction) = interaction_stream.next().await {
       let custom_id = interaction.data.custom_id.as_str();
       match custom_id {
@@ -162,7 +159,6 @@ async fn search_init(ctx: Context<'_>, search: HashMap<u8, SingleVideo>, index: 
             let mut handler_lock = handler.lock().await;
             handler_lock.enqueue_input(src.into()).await;
             
-            println!("Track playing from search");
             let video_respone = format!("**Successfully added track:** {}", video.title.expect("No title for video"));
             commands::check_message(ctx.say(video_respone).await);
 
@@ -238,7 +234,6 @@ async fn search_init(ctx: Context<'_>, search: HashMap<u8, SingleVideo>, index: 
 }
 
 pub fn search_msg(search: HashMap<u8, SingleVideo>, index: &mut u8) -> StdResult<CreateReply> {
-   println!("New search msg generating");
    let mut search_list = String::new();
    for (k, v) in search.clone().into_iter() {
       if k == *index {
@@ -247,7 +242,6 @@ pub fn search_msg(search: HashMap<u8, SingleVideo>, index: &mut u8) -> StdResult
          search_list.push_str(format!(" {}. {}\n", k, v.title.expect("No title for video")).as_str());
       }
    }
-   println!("Formated selection");
 
    let embed = serenity::CreateEmbed::new().title("Search result").color((255, 0, 0)).field("Found tracks:", search_list, false);
    let components = serenity::CreateActionRow::Buttons(vec![
@@ -255,7 +249,6 @@ pub fn search_msg(search: HashMap<u8, SingleVideo>, index: &mut u8) -> StdResult
       CreateButton::new("down").emoji("⬇️".chars().next().unwrap()).style(serenity::ButtonStyle::Primary),
       CreateButton::new("select").emoji("🎵".chars().next().unwrap()).style(serenity::ButtonStyle::Success),
    ]);
-   println!("Made Embed and Buttons");
 
    Ok(CreateReply::embed(CreateReply::default(), embed).components(vec![components]))
 }
