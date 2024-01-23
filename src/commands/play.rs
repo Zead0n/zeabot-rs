@@ -66,7 +66,7 @@ pub async fn search(
 
 async fn search_up(ctx: Context<'_>, title: String, handler: Arc<Mutex<Call>>) -> StdResult<()> {
    if let Err(e) = ctx.defer().await {
-      panic!("Error defering search");
+      panic!("Error defering search: {:?}", e);
    }
 
    let search_result = YoutubeDl::search_for(&SearchOptions::youtube(title).with_count(5))
@@ -75,6 +75,7 @@ async fn search_up(ctx: Context<'_>, title: String, handler: Arc<Mutex<Call>>) -
       .run_async()
       .await?;
 
+   println!("YoutubeDl search done");
    match search_result {
       YoutubeDlOutput::Playlist(playlist) => {
          let mut search_map: HashMap<u8, SingleVideo> = HashMap::new();
@@ -103,6 +104,7 @@ async fn search_up(ctx: Context<'_>, title: String, handler: Arc<Mutex<Call>>) -
 }
 
 async fn search_init(ctx: Context<'_>, search: HashMap<u8, SingleVideo>, index: &mut u8, handler: Arc<Mutex<Call>>) -> StdResult<()> {
+   println!("Search initiation started");
    if let Ok(reply) = &ctx.send(search_msg(search.clone(), index).into()).await {
       let msg = reply.message().await?;
       let mut interaction_stream = msg
@@ -153,6 +155,7 @@ async fn search_init(ctx: Context<'_>, search: HashMap<u8, SingleVideo>, index: 
                let mut handler_lock = handler.lock().await;
                handler_lock.enqueue_input(src.into()).await;
                
+               println!("Track playing from search");
                let video_respone = format!("**Successfully added track:** {}", video.title.expect("No title for video"));
                commands::check_message(ctx.say(video_respone).await);
             }
@@ -165,6 +168,7 @@ async fn search_init(ctx: Context<'_>, search: HashMap<u8, SingleVideo>, index: 
 }
 
 pub fn search_msg(search: HashMap<u8, SingleVideo>, index: &mut u8) -> CreateReply {
+   println!("New search msg generating");
    let mut search_list = String::new();
    for (k, v) in search.clone().into_iter() {
       if k == *index {
