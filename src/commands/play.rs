@@ -62,41 +62,13 @@ pub async fn search(
    }
 
    Ok(())
-
-
-   // let search_result = YoutubeDl::search_for(&SearchOptions::youtube(title).with_count(5))
-   //    .socket_timeout("20")
-   //    .extract_audio(true)
-   //    .run_async()
-   //    .await?;
-
-   // match search_result {
-   //    YoutubeDlOutput::Playlist(playlist) => {
-   //       let mut search_map: HashMap<u8, SingleVideo> = HashMap::new();
-   //       // let mut search_map = ctx.data().search.lock().await;
-   //       // let mut search_list = String::new();
-   //       let mut index = 1;
-   //       let mut input_index = index;
-
-   //       for video in playlist.entries.expect("Failed to get videos of playlist") {
-   //          search_map.insert(index, video);
-   //          index += 1;
-   //       }
-
-   //       if let Err(e) = search_embed(ctx, search_map, &mut input_index).await {
-   //          panic!("Error creating search embed: {:?}", e);
-   //       }
-
-   //       Ok(())
-   //    },
-   //    _ => {
-   //       println!("Something went wrong?");
-   //       Ok(())
-   //    }
-   // }
 }
 
 async fn search_up(ctx: Context<'_>, title: String, handler: Arc<Mutex<Call>>) -> StdResult<()> {
+   if let Err(e) = ctx.defer().await {
+      panic!("Error defering search");
+   }
+
    let search_result = YoutubeDl::search_for(&SearchOptions::youtube(title).with_count(5))
       .socket_timeout("20")
       .extract_audio(true)
