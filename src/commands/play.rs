@@ -118,7 +118,7 @@ async fn search_init(ctx: Context<'_>, search: Vec<SingleVideo>, handler: Arc<Mu
             if index > 0 {
                index -= 1;
             } else {
-               index = 0;
+               index = 4;
             }
 
             if let Err(e) = interaction.create_response(
@@ -138,7 +138,7 @@ async fn search_init(ctx: Context<'_>, search: Vec<SingleVideo>, handler: Arc<Mu
             if index < 4 {
                index += 1;
             } else {
-               index = 4
+               index = 0;
             }
 
             if let Err(e) = interaction.create_response(
@@ -185,14 +185,14 @@ pub fn search_msg(search: Vec<SingleVideo>, index: u8) -> StdResult<CreateReply>
       match k {
          0 => {
             if 0 == index {
-               song_list.push_str(format!("**{}**", v.title.expect("No title found")).as_str());
+               song_list.push_str(format!("__**{}**__", v.title.expect("No title found")).as_str());
             } else {
                song_list.push_str(format!("{}", v.title.expect("No title found")).as_str());
             }
          }
          _ => {
             if k == index as usize {
-               song_list.push_str(format!("\n\n**{}**", v.title.expect("No title found")).as_str());
+               song_list.push_str(format!("\n\n__**{}**__", v.title.expect("No title found")).as_str());
             } else {
                song_list.push_str(format!("\n\n{}", v.title.expect("No title found")).as_str());
             }
