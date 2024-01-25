@@ -189,7 +189,7 @@ pub fn search_msg(search: Vec<SingleVideo>, index: u8) -> StdResult<CreateReply>
             }
          }
          _ => {
-            if k as usize == index {
+            if k == index as usize {
                song_list.push(format!("\n\n**{}**", v.title.expect("No title found")).as_str());
             } else {
                song_list.push(format!("\n\n{}", v.title.expect("No title found")).as_str());
