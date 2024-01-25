@@ -6,7 +6,7 @@ use ::serenity::futures::StreamExt;
 use serenity::prelude::Mutex;
 use songbird::input::YoutubeDl as SongbirdDl;
 use songbird::Call;
-pub use poise::serenity_prelude as serenity;
+use poise::serenity_prelude as serenity;
 use poise::reply::CreateReply;
 use youtube_dl::{SearchOptions, YoutubeDl, YoutubeDlOutput, SingleVideo};
 
@@ -116,9 +116,9 @@ async fn search_init(ctx: Context<'_>, search: Vec<SingleVideo>, handler: Arc<Mu
             error::check_result::<(), serenity::Error>(ctx.defer().await);
 
             if index < 4 {
-               index += 1;
+               index -= 1;
             } else {
-               index = 1;
+               index = 0;
             }
 
             if let Err(e) = interaction.create_response(
@@ -136,7 +136,7 @@ async fn search_init(ctx: Context<'_>, search: Vec<SingleVideo>, handler: Arc<Mu
             error::check_result::<(), serenity::Error>(ctx.defer().await);
 
             if index > 0 {
-               index -= 1;
+               index += 1;
             } else {
                index = 4
             }
