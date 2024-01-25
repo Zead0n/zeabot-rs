@@ -1,25 +1,23 @@
 use std::sync::Arc;
-// use std::collections::HashMap;
 use std::time::Duration;
-use ::serenity::builder::CreateButton;
-use ::serenity::futures::StreamExt;
+use serenity::builder::CreateButton;
+use serenity::futures::StreamExt;
 use serenity::prelude::Mutex;
+use poise::serenity_prelude as serenity;
 use songbird::input::YoutubeDl as SongbirdDl;
 use songbird::Call;
-use poise::serenity_prelude as serenity;
 use poise::reply::CreateReply;
-use youtube_dl::{SearchOptions, YoutubeDl, YoutubeDlOutput, SingleVideo};
+use youtube_dl::*;
 
-use crate::{commands, error, Context, StdResult};
-use crate::bot::HttpKey;
+use crate::*;
+use bot::HttpKey;
+use helper::*;
 
 #[poise::command(slash_command)]
 pub async fn play(
    ctx: Context<'_>,
 ) -> StdResult<()> {
-   if let Err(e) = ctx.say("Should require subsommand").await {
-      panic!("Failed send play is subcommand nitification: {:?}", e);
-   }
+   check_result(ctx.say("Should require subsommand").await);
 
    Ok(())
 }
@@ -30,15 +28,15 @@ pub async fn url(
    ctx: Context<'_>,
    #[description = "Enter a URL"] url: String
 ) -> StdResult<()> {
+   if !has_perm(&ctx).await {
+      return Ok(());
+   }
+
    if let Some(handler) = commands::handler_exist(ctx).await {
-      if let Err(e) = queue_up(ctx, url, handler).await {
-         panic!("Error queuing music: {:?}", e);
-      }
+      check_result(queue_up(ctx, url, handler).await);
    } else {
       let new_handler = commands::join_channel(ctx).await?;
-      if let Err(e) = queue_up(ctx, url, new_handler).await {
-         panic!("Error queuing music from joining: {:?}", e);
-      }
+      check_result(queue_up(ctx, url, new_handler).await);
    }
 
    Ok(())
@@ -50,26 +48,22 @@ pub async fn search(
    ctx: Context<'_>,
    #[description = "Enter a title"] title: String
 ) -> StdResult<()> {
+   if !has_perm(&ctx).await {
+      return Ok(());
+   }
+
    if let Some(handler) = commands::handler_exist(ctx).await {
-      if let Err(e) = search_up(ctx, title, handler).await {
-         panic!("Error queuing music: {:?}", e);
-      }
+      check_result(search_up(ctx, title, handler).await);
    } else {
       let new_handler = commands::join_channel(ctx).await?;
-      if let Err(e) = search_up(ctx, title, new_handler).await {
-         panic!("Error queuing music from joining: {:?}", e);
-      }
+      check_result(search_up(ctx, title, new_handler).await);
    }
 
    Ok(())
 }
 
 async fn search_up(ctx: Context<'_>, title: String, handler: Arc<Mutex<Call>>) -> StdResult<()> {
-   // if let Err(e) = ctx.defer().await {
-   //    panic!("Error defering search: {:?}", e);
-   // }
-
-   error::check_result::<(), serenity::Error>(ctx.defer().await);
+   check_result(ctx.defer().await);
 
    let search_result = YoutubeDl::search_for(&SearchOptions::youtube(title).with_count(5))
       .socket_timeout("20")
@@ -96,12 +90,7 @@ async fn search_up(ctx: Context<'_>, title: String, handler: Arc<Mutex<Call>>) -
 
 async fn search_init(ctx: Context<'_>, search: Vec<SingleVideo>, handler: Arc<Mutex<Call>>) -> StdResult<()> {
    let mut index = 0;
-   let reply = match ctx.send(search_msg(search.clone(), index).unwrap()).await {
-      Ok(reply) => reply,
-      Err(e) => {
-         panic!("Skill issue: {:?}", e);
-      }
-   };
+   let reply = check_result(ctx.send(search_msg(search.clone(), index).unwrap()).await);
 
    let msg = reply.message().await?;
    let mut interaction_stream = msg
@@ -113,7 +102,7 @@ async fn search_init(ctx: Context<'_>, search: Vec<SingleVideo>, handler: Arc<Mu
       let custom_id = interaction.data.custom_id.as_str();
       match custom_id {
          "up" => {
-            error::check_result::<(), serenity::Error>(ctx.defer().await);
+            check_result(ctx.defer().await);
 
             if index > 0 {
                index -= 1;
@@ -121,19 +110,17 @@ async fn search_init(ctx: Context<'_>, search: Vec<SingleVideo>, handler: Arc<Mu
                index = 4;
             }
 
-            if let Err(e) = interaction.create_response(
+            check_result(interaction.create_response(
                &ctx, 
                serenity::CreateInteractionResponse::UpdateMessage(
                   search_msg(search.clone(), index)
                   .unwrap()
                   .to_slash_initial_response(serenity::CreateInteractionResponseMessage::new())
                )
-            ).await{
-               panic!("I'm too tired: {:?}",e);
-            }
+            ).await);
          }
          "down" => {
-            error::check_result::<(), serenity::Error>(ctx.defer().await);
+            check_result(ctx.defer().await);
 
             if index < 4 {
                index += 1;
@@ -141,19 +128,17 @@ async fn search_init(ctx: Context<'_>, search: Vec<SingleVideo>, handler: Arc<Mu
                index = 0;
             }
 
-            if let Err(e) = interaction.create_response(
+            check_result(interaction.create_response(
                &ctx, 
                serenity::CreateInteractionResponse::UpdateMessage(
                   search_msg(search.clone(), index)
                   .unwrap()
                   .to_slash_initial_response(serenity::CreateInteractionResponseMessage::new())
                )
-            ).await{
-               panic!("I'm too tired: {:?}",e);
-            }
+            ).await);
          }
          "select" => {
-            error::check_result::<(), serenity::Error>(ctx.defer().await);
+            check_result(ctx.defer().await);
 
             let video = search.get(index as usize).expect("No video found in search").to_owned();
             let http_client = {
@@ -167,7 +152,7 @@ async fn search_init(ctx: Context<'_>, search: Vec<SingleVideo>, handler: Arc<Mu
             handler_lock.enqueue_input(src.into()).await;
             
             let video_respone = format!("**Successfully added track:** {}", video.title.expect("No title for video"));
-            commands::check_message(ctx.say(video_respone).await);
+            check_result(ctx.say(video_respone).await);
 
             return Ok(());
          }
@@ -213,9 +198,7 @@ pub fn search_msg(search: Vec<SingleVideo>, index: u8) -> StdResult<CreateReply>
 }
 
 async fn queue_up(ctx: Context<'_>, url: String, handler: Arc<Mutex<Call>>) -> StdResult<()> {
-   if let Err(e) = ctx.defer().await {
-      panic!("Failed to defer song addition: {:?}", e);
-   }
+   check_result(ctx.defer().await);
 
    let http_client = {
       let data = ctx.serenity_context().data.read().await;
@@ -232,12 +215,12 @@ async fn queue_up(ctx: Context<'_>, url: String, handler: Arc<Mutex<Call>>) -> S
          handler_lock.enqueue_input(src.into()).await;
          
          let video_respone = format!("**Successfully added track:** {}", video.title.expect("No title for video"));
-         commands::check_message(ctx.say(video_respone).await);
+         check_result(ctx.say(video_respone).await);
       },
       YoutubeDlOutput::Playlist(playlist) => {
          let videos = playlist.entries.expect("Failed to get videos of playlist");
          if videos.len() >= 10 {
-            commands::check_message(ctx.say("Sorry, don't take playlists with 10 videos or more\n(This is experimental)").await);
+            check_result(ctx.say("Sorry, don't take playlists with 10 videos or more\n(This is experimental)").await);
 
             return Ok(());
          }
@@ -250,7 +233,7 @@ async fn queue_up(ctx: Context<'_>, url: String, handler: Arc<Mutex<Call>>) -> S
          }
 
          let playlist_respone = format!("**Successfully added playlist:** {}\n**__Added tracks :__** {}", playlist.title.expect("No title for playlist"), video_list);
-         commands::check_message(ctx.say(playlist_respone).await);
+         check_result(ctx.say(playlist_respone).await);
       }
    }
 

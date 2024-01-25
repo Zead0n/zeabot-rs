@@ -12,7 +12,7 @@ pub async fn help(
         ctx,
         command.as_deref(),
         poise::builtins::HelpConfiguration {
-            extra_text_at_bottom: "Avaliable commands. (Note: craft command is only avaible in #forge)",
+            extra_text_at_bottom: "Avaliable commands",
             ..Default::default()
         },
     )

@@ -1,6 +1,7 @@
 mod bot;
 mod commands;
 mod error;
+mod helper;
 
 use tokio;
 use crate::bot::*;

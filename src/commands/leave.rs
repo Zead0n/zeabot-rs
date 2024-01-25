@@ -1,9 +1,14 @@
-use crate::{Context, StdResult};
+use crate::*;
+use helper::*;
 
 #[poise::command(slash_command)]
 pub async fn leave(
    ctx: Context<'_>
 ) -> StdResult<()> {
+   if !has_perm(&ctx).await {
+      return Ok(());
+   }
+
    let guild_id = ctx.guild_id().expect("Couldn't get guild_id for leave");
    let manager = songbird::get(ctx.serenity_context())
       .await
