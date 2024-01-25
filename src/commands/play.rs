@@ -10,7 +10,7 @@ pub use poise::serenity_prelude as serenity;
 use poise::reply::CreateReply;
 use youtube_dl::{SearchOptions, YoutubeDl, YoutubeDlOutput, SingleVideo};
 
-use crate::{Context, StdResult, commands};
+use crate::{commands, error, Context, StdResult};
 use crate::bot::HttpKey;
 
 #[poise::command(slash_command)]
@@ -65,9 +65,11 @@ pub async fn search(
 }
 
 async fn search_up(ctx: Context<'_>, title: String, handler: Arc<Mutex<Call>>) -> StdResult<()> {
-   if let Err(e) = ctx.defer().await {
-      panic!("Error defering search: {:?}", e);
-   }
+   // if let Err(e) = ctx.defer().await {
+   //    panic!("Error defering search: {:?}", e);
+   // }
+
+   error::check_result::<(), serenity::Error>(ctx.defer().await);
 
    let search_result = YoutubeDl::search_for(&SearchOptions::youtube(title).with_count(5))
       .socket_timeout("20")
@@ -77,18 +79,17 @@ async fn search_up(ctx: Context<'_>, title: String, handler: Arc<Mutex<Call>>) -
 
    match search_result {
       YoutubeDlOutput::Playlist(playlist) => {
-         let mut search_vec: Vec<(u8, SingleVideo)> = Vec::new();
+         let mut search_vec: Vec<SingleVideo> = Vec::new();
          let mut index = 1;
 
          for video in playlist.entries.expect("Failed to get videos of playlist") {
-            search_vec.push((index, video));
+            search_vec.push(video);
             index += 1;
          }
-         search_vec.sort_by(|a, b| a.0.cmp(&b.0));
-         let search_map: HashMap<u8, SingleVideo> = search_vec.into_iter().collect();
+         // search_vec.sort_by(|a, b| a.0.cmp(&b.0));
+         // let search_map: HashMap<u8, SingleVideo> = search_vec.into_iter().collect();
          
-
-         if let Err(e) = search_init(ctx, search_map, &mut 1, handler).await {
+         if let Err(e) = search_init(ctx, search_vec, handler).await {
             panic!("Error creating search embed: {:?}", e);
          }
 
@@ -99,10 +100,10 @@ async fn search_up(ctx: Context<'_>, title: String, handler: Arc<Mutex<Call>>) -
          Ok(())
       }
    }
-
 }
 
-async fn search_init(ctx: Context<'_>, search: HashMap<u8, SingleVideo>, index: &mut u8, handler: Arc<Mutex<Call>>) -> StdResult<()> {
+async fn search_init(ctx: Context<'_>, search: Vec<SingleVideo>, handler: Arc<Mutex<Call>>) -> StdResult<()> {
+   let mut index = 0;
    let reply = match ctx.send(search_msg(search.clone(), index).unwrap()).await {
       Ok(reply) => reply,
       Err(e) => {
@@ -120,10 +121,12 @@ async fn search_init(ctx: Context<'_>, search: HashMap<u8, SingleVideo>, index: 
       let custom_id = interaction.data.custom_id.as_str();
       match custom_id {
          "up" => {
-            if *index < 5 {
-               *index += 1;
+            error::check_result::<(), serenity::Error>(ctx.defer().await);
+
+            if index < 5 {
+               index += 1;
             } else {
-               *index = 1;
+               index = 1;
             }
 
             if let Err(e) = interaction.edit_response(
@@ -134,10 +137,12 @@ async fn search_init(ctx: Context<'_>, search: HashMap<u8, SingleVideo>, index: 
             }
          }
          "down" => {
-            if *index > 1 {
-               *index -= 1;
+            error::check_result::<(), serenity::Error>(ctx.defer().await);
+
+            if index > 1 {
+               index -= 1;
             } else {
-               *index = 5
+               index = 5
             }
 
             if let Err(e) = interaction.edit_response(
@@ -148,7 +153,9 @@ async fn search_init(ctx: Context<'_>, search: HashMap<u8, SingleVideo>, index: 
             }
          }
          "select" => {
-            let video = search.get(&index).expect("No video found in search").to_owned();
+            error::check_result::<(), serenity::Error>(ctx.defer().await);
+
+            let video = search.get(index).expect("No video found in search");
             let http_client = {
                let data = ctx.serenity_context().data.read().await;
                data.get::<HttpKey>()
@@ -164,24 +171,38 @@ async fn search_init(ctx: Context<'_>, search: HashMap<u8, SingleVideo>, index: 
 
             return Ok(());
          }
-         _ => println!("Unknow custom_id")
+         _ => println!("Unknown custom_id")
       }
    }
 
    Ok(())
 }
 
-pub fn search_msg(search: HashMap<u8, SingleVideo>, index: &mut u8) -> StdResult<CreateReply> {
-   let mut search_list = String::new();
-   for (k, v) in search.clone().into_iter() {
-      if k == *index {
-         search_list.push_str(format!("→{}. {}\n", k, v.title.expect("No title for video")).as_str());
-      } else {
-         search_list.push_str(format!(" {}. {}\n", k, v.title.expect("No title for video")).as_str());
+pub fn search_msg(search: Vec<SingleVideo>, index: u8) -> StdResult<CreateReply> {
+   // let mut index_list = String::new();
+   let mut song_list = String::new();
+   for (k, v) in search.into_iter().enumerate() {
+      match k {
+         0 => {
+            if 0 == index {
+               song_list.push(format!("**{}**", v.title.expect("No title found")));
+            } else {
+               song_list.push(format!("{}", v.title.expect("No title found")));
+            }
+         }
+         _ => {
+            if k == index {
+               song_list.push(format!("\n\n**{}**", v.title.expect("No title found")));
+            } else {
+               song_list.push(format!("\n\n{}", v.title.expect("No title found")));
+            }
+         }
       }
    }
 
-   let embed = serenity::CreateEmbed::new().title("Search result").color((255, 0, 0)).field("Found tracks:", search_list, false);
+   let embed = serenity::CreateEmbed::new()
+      .title("Search result").color((255, 0, 0))
+      .field("Found tracks:", search_list, false);
    let components = serenity::CreateActionRow::Buttons(vec![
       CreateButton::new("up").emoji("⬆️".chars().next().unwrap()).style(serenity::ButtonStyle::Primary),
       CreateButton::new("down").emoji("⬇️".chars().next().unwrap()).style(serenity::ButtonStyle::Primary),

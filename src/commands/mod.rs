@@ -114,8 +114,8 @@ pub async fn join_channel(ctx: Context<'_>) -> StdResult<Arc<Mutex<Call>>> {
 }
 
 // Discord check message 
-pub fn check_message(result: Result<poise::reply::ReplyHandle, poise::serenity_prelude::Error>) {
-   if let Err(e) = result {
-      panic!("Error sending check message: {:?}", e)
-   }
-}
+// pub fn check_message(result: Result<poise::reply::ReplyHandle, poise::serenity_prelude::Error>) {
+//    if let Err(e) = result {
+//       panic!("Error sending check message: {:?}", e)
+//    }
+// }
