@@ -115,7 +115,7 @@ async fn search_init(ctx: Context<'_>, search: Vec<SingleVideo>, handler: Arc<Mu
          "up" => {
             error::check_result::<(), serenity::Error>(ctx.defer().await);
 
-            if index < 4 {
+            if index > 0 {
                index -= 1;
             } else {
                index = 0;
@@ -135,7 +135,7 @@ async fn search_init(ctx: Context<'_>, search: Vec<SingleVideo>, handler: Arc<Mu
          "down" => {
             error::check_result::<(), serenity::Error>(ctx.defer().await);
 
-            if index > 0 {
+            if index < 4 {
                index += 1;
             } else {
                index = 4
