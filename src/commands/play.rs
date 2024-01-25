@@ -79,13 +79,7 @@ async fn search_up(ctx: Context<'_>, title: String, handler: Arc<Mutex<Call>>) -
 
    match search_result {
       YoutubeDlOutput::Playlist(playlist) => {
-         let mut search_vec: Vec<SingleVideo> = Vec::new();
-
-         for video in playlist.entries.expect("Failed to get videos of playlist") {
-            search_vec.push(video);
-         }
-         // search_vec.sort_by(|a, b| a.0.cmp(&b.0));
-         // let search_map: HashMap<u8, SingleVideo> = search_vec.into_iter().collect();
+         let search_vec = playlist.entries.expect("Failed to get videos of playlist");
          
          if let Err(e) = search_init(ctx, search_vec, handler).await {
             panic!("Error creating search embed: {:?}", e);
