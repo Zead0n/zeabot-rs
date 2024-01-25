@@ -121,9 +121,13 @@ async fn search_init(ctx: Context<'_>, search: Vec<SingleVideo>, handler: Arc<Mu
                index = 1;
             }
 
-            if let Err(e) = interaction.edit_response(
+            if let Err(e) = interaction.create_response(
                &ctx, 
-               search_msg(search.clone(), index).unwrap().to_slash_initial_response_edit(serenity::EditInteractionResponse::new())
+               serenity::CreateInteractionResponse::UpdateMessage(
+                  search_msg(search.clone(), index)
+                  .unwrap()
+                  .to_slash_initial_response(serenity::CreateInteractionResponseMessage::new())
+               )
             ).await{
                panic!("I'm too tired: {:?}",e);
             }
@@ -137,9 +141,13 @@ async fn search_init(ctx: Context<'_>, search: Vec<SingleVideo>, handler: Arc<Mu
                index = 4
             }
 
-            if let Err(e) = interaction.edit_response(
-               &ctx,
-               search_msg(search.clone(), index).unwrap().to_slash_initial_response_edit(serenity::EditInteractionResponse::new())
+            if let Err(e) = interaction.create_response(
+               &ctx, 
+               serenity::CreateInteractionResponse::UpdateMessage(
+                  search_msg(search.clone(), index)
+                  .unwrap()
+                  .to_slash_initial_response(serenity::CreateInteractionResponseMessage::new())
+               )
             ).await{
                panic!("I'm too tired: {:?}",e);
             }
