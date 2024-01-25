@@ -1,7 +1,7 @@
-use crate::{StdError, StdResult};
+use crate::StdError;
 use crate::bot::Data;
 
-pub fn check_result<T, E>(result: Result<T, E>) -> T {
+pub fn check_result<T, E: std::fmt::Debug>(result: Result<T, E>) -> T {
     // if let Err(e) = result {
     //     panic!("Error from result: {:?}", e);
     // } else {

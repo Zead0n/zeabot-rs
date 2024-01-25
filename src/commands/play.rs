@@ -1,5 +1,5 @@
 use std::sync::Arc;
-use std::collections::HashMap;
+// use std::collections::HashMap;
 use std::time::Duration;
 use ::serenity::builder::CreateButton;
 use ::serenity::futures::StreamExt;
@@ -80,11 +80,9 @@ async fn search_up(ctx: Context<'_>, title: String, handler: Arc<Mutex<Call>>) -
    match search_result {
       YoutubeDlOutput::Playlist(playlist) => {
          let mut search_vec: Vec<SingleVideo> = Vec::new();
-         let mut index = 1;
 
          for video in playlist.entries.expect("Failed to get videos of playlist") {
             search_vec.push(video);
-            index += 1;
          }
          // search_vec.sort_by(|a, b| a.0.cmp(&b.0));
          // let search_map: HashMap<u8, SingleVideo> = search_vec.into_iter().collect();
@@ -155,7 +153,7 @@ async fn search_init(ctx: Context<'_>, search: Vec<SingleVideo>, handler: Arc<Mu
          "select" => {
             error::check_result::<(), serenity::Error>(ctx.defer().await);
 
-            let video = search.get(index).expect("No video found in search");
+            let video = search.get(index as usize).expect("No video found in search").to_owned();
             let http_client = {
                let data = ctx.serenity_context().data.read().await;
                data.get::<HttpKey>()
@@ -185,16 +183,16 @@ pub fn search_msg(search: Vec<SingleVideo>, index: u8) -> StdResult<CreateReply>
       match k {
          0 => {
             if 0 == index {
-               song_list.push(format!("**{}**", v.title.expect("No title found")));
+               song_list.push(format!("**{}**", v.title.expect("No title found")).as_str());
             } else {
-               song_list.push(format!("{}", v.title.expect("No title found")));
+               song_list.push(format!("{}", v.title.expect("No title found")).as_str());
             }
          }
          _ => {
-            if k == index {
-               song_list.push(format!("\n\n**{}**", v.title.expect("No title found")));
+            if k as usize == index {
+               song_list.push(format!("\n\n**{}**", v.title.expect("No title found")).as_str());
             } else {
-               song_list.push(format!("\n\n{}", v.title.expect("No title found")));
+               song_list.push(format!("\n\n{}", v.title.expect("No title found")).as_str());
             }
          }
       }
@@ -202,7 +200,7 @@ pub fn search_msg(search: Vec<SingleVideo>, index: u8) -> StdResult<CreateReply>
 
    let embed = serenity::CreateEmbed::new()
       .title("Search result").color((255, 0, 0))
-      .field("Found tracks:", search_list, false);
+      .field("Found tracks:", song_list, false);
    let components = serenity::CreateActionRow::Buttons(vec![
       CreateButton::new("up").emoji("⬆️".chars().next().unwrap()).style(serenity::ButtonStyle::Primary),
       CreateButton::new("down").emoji("⬇️".chars().next().unwrap()).style(serenity::ButtonStyle::Primary),
