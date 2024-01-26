@@ -15,7 +15,7 @@ pub async fn has_perm(ctx: &Context<'_>) -> bool {
     let member = ctx.author_member().await.expect("No member found");
     let perm = match member.guild_id.get() {
         270329415404093440 => {
-            let roled = member.roles.contains(&RoleId::new(540989126803980289)) || member.roles.contains(&RoleId::new(540989126803980289));
+            let roled = member.roles.contains(&RoleId::new(540989126803980289));
             let okami = member.user.id.get() == 153682548017463296;
             let bot_channel = ctx.channel_id() == serenity::ChannelId::new(360582111398330369);
 
@@ -25,6 +25,7 @@ pub async fn has_perm(ctx: &Context<'_>) -> bool {
 
             return false;
         }
+        884664077643829248 => return true,
         459781165377650688 => return true,
         _ => false,
     };
