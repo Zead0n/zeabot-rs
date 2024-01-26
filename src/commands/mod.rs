@@ -43,7 +43,7 @@ impl VoiceEventHandler for VoiceCallEvent {
             let songbird_call = self.handler.lock().await;
             let songbird_channel_id = songbird_call.current_channel().expect("No channel id found").0;
             let guild_channel = check_result(serenity::ChannelId::from(songbird_channel_id).to_channel(&self.context).await).guild().expect("No Guild found");
-            let check_empty = check_result(guild_channel.members(&self.context)).is_empty();
+            let check_empty = check_result(guild_channel.members(&self.context)).len() <= 1;
             let guild_id = guild_channel.guild_id;
 
             if check_empty {
