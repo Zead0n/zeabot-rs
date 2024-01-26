@@ -28,10 +28,7 @@ pub fn load_options() -> FrameworkOptions<Data, StdError> {
         on_error: |error| Box::pin(error::on_error(error)),
         command_check: Some(|ctx| {
             Box::pin(async move {
-                if !has_perm(&ctx).await {
-                    return Ok(false);
-                }
-                Ok(true)
+                Ok(has_perm(&ctx).await)
             })
         }),
         skip_checks_for_owners: false,

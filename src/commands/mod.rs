@@ -9,7 +9,7 @@ pub mod help;
 use std::sync::Arc;
 use serenity::prelude::Mutex;
 use songbird::Call;
-use songbird::events::{Event, EventContext, EventHandler as VoiceEventHandler, TrackEvent};
+use songbird::events::{*, EventHandler as VoiceEventHandler};
 use poise::serenity_prelude as serenity;
 use poise::async_trait;
 
@@ -17,12 +17,12 @@ use crate::*;
 use helper::*;
 use bot::Data;
 
-struct TrackErrorNotifier {
+struct VoiceCallEvent {
    context: serenity::Context,
    handler: Arc<Mutex<Call>>,
 }
 
-impl TrackErrorNotifier {
+impl VoiceCallEvent {
    fn new(context: serenity::Context, handler: Arc<Mutex<Call>>) -> Self {
       Self {
          context,
@@ -32,14 +32,9 @@ impl TrackErrorNotifier {
 }
 
 #[async_trait]
-impl VoiceEventHandler for TrackErrorNotifier {
+impl VoiceEventHandler for VoiceCallEvent {
    async fn act(&self, ctx: &EventContext<'_>) -> Option<Event> {
       match ctx {
-         EventContext::Track(track_list) => {
-            for (state, handle) in *track_list {
-               println!("Track {:?} encountered an error: {:?}", handle.uuid(), state.playing);
-            }
-         },
          EventContext::ClientDisconnect(_) => {
             println!("Client disconnected");
             let mut songbird_call = self.handler.lock().await;
@@ -114,7 +109,7 @@ pub async fn join_channel(ctx: Context<'_>) -> StdResult<Arc<Mutex<Call>>> {
    // if let Ok(handler_lock) = manager.join(guild_id, connect_to).await {
    //    // Attach an event handler to see notifications of all track errors.
    //    let mut handler = handler_lock.lock().await;
-   //    handler.add_global_event(TrackEvent::Error.into(), TrackErrorNotifier::new(guild_id));
+   //    handler.add_global_event(TrackEvent::Error.into(), VoiceCallEvent::new(guild_id));
    // }
 
    let handler = match manager.join(guild_id, connect_to).await {
@@ -122,7 +117,7 @@ pub async fn join_channel(ctx: Context<'_>) -> StdResult<Arc<Mutex<Call>>> {
       Err(e) => panic!("Bruh: {:?}", e),
    };
 
-   handler.lock().await.add_global_event(TrackEvent::Error.into(), TrackErrorNotifier::new(serenity_context.clone(), handler.clone()));
+   handler.lock().await.add_global_event(CoreEvent::ClientDisconnect.into(), VoiceCallEvent::new(serenity_context.clone(), handler.clone()));
 
    Ok(handler)
 }

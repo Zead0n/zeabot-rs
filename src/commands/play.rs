@@ -96,7 +96,7 @@ async fn search_init(ctx: Context<'_>, search: Vec<SingleVideo>, handler: Arc<Mu
    let mut interaction_stream = msg
       .clone()
       .await_component_interaction(&ctx.serenity_context().shard)
-      .timeout(Duration::from_secs(60 * 2))
+      .timeout(Duration::from_secs(60))
       .stream();
    while let Some(interaction) = interaction_stream.next().await {
       let custom_id = interaction.data.custom_id.as_str();
