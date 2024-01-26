@@ -10,11 +10,9 @@ pub async fn join(
       return Ok(());
    }
 
-   if let Err(e) = commands::join_channel(ctx).await {
-      panic!("Failed to join with '/join': {:?}", e);
-   }
+   check_result(commands::join_channel(ctx).await);
 
-   check_result(ctx.say("SUISEI WAAAAA").await);
+   check_result(ctx.say("Joined Channel").await);
 
    Ok(())
 }

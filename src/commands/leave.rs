@@ -17,19 +17,10 @@ pub async fn leave(
    let has_handler = manager.get(guild_id).is_some();
 
    if has_handler {
-      if let Err(e) = manager.remove(guild_id).await {
-         if let Err(e) = ctx.say(format!("Oops something went wrong: {:?}", e)).await {
-               panic!("Failed send error for leave: {:?}", e);
-         }
-      }
-
-      if let Err(e) = ctx.say("Snooze time?").await {
-         panic!("Failed to kiss goodnight: {:?}",e);
-      }
+      check_result(manager.remove(guild_id).await);
+      check_result(ctx.say("Left the channel").await);
    } else {
-      if let Err(e) = ctx.say("Really goonna me hanging huh? (need to be in VC)").await {
-         panic!("Failed to send failed leave call: {:?}", e);
-      }
+      check_result(ctx.say("Not even there").await);
    }
 
    Ok(())

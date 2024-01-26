@@ -11,19 +11,23 @@ use serenity::prelude::Mutex;
 use serenity::all::GuildId;
 use songbird::Call;
 use songbird::events::{Event, EventContext, EventHandler as VoiceEventHandler, TrackEvent};
+use poise::serenity_prelude as serenity;
 use poise::async_trait;
 
-use crate::bot::Data;
-use crate::{StdError, StdResult, Context};
+use crate::*;
+use helper::*;
+use bot::Data;
 
 struct TrackErrorNotifier {
-   _guild_id: GuildId,
+   context: serenity::Context,
+   handler: Arc<Mutex<Call>>,
 }
 
 impl TrackErrorNotifier {
-   fn new(_ctx: Context<'_>, guild_id: GuildId) -> Self {
-      TrackErrorNotifier {
-         _guild_id: guild_id,
+   fn new(context: serenity::Context, handler: Arc<Mutex<Call>>) -> Self {
+      Self {
+         context,
+         handler
       }
    }
 }
@@ -37,6 +41,16 @@ impl VoiceEventHandler for TrackErrorNotifier {
                println!("Track {:?} encountered an error: {:?}", handle.uuid(), state.playing);
             }
          },
+         EventContext::ClientDisconnect(_) => {
+            let mut songbird_call = self.handler.lock().await;
+            let songbird_channel_id = songbird_call.current_channel().expect("No channel id found").0;
+            let serenity_channel = check_result(serenity::ChannelId::from(songbird_channel_id).to_channel(&self.context).await);
+            let check_empty = check_result(serenity_channel.guild().expect("No Guild found").members(&self.context)).is_empty();
+
+            if check_empty {
+               check_result(songbird_call.leave().await);
+            }
+         }
          _ => {},
       }
 
@@ -92,7 +106,8 @@ pub async fn join_channel(ctx: Context<'_>) -> StdResult<Arc<Mutex<Call>>> {
       },
    };
 
-   let manager = songbird::get(ctx.serenity_context())
+   let serenity_context = ctx.serenity_context();
+   let manager = songbird::get(serenity_context)
       .await
       .expect("Songbird Voice client placed in at initialisation.")
       .clone();
@@ -108,7 +123,7 @@ pub async fn join_channel(ctx: Context<'_>) -> StdResult<Arc<Mutex<Call>>> {
       Err(e) => panic!("Bruh: {:?}", e),
    };
 
-   handler.lock().await.add_global_event(TrackEvent::Error.into(), TrackErrorNotifier::new(ctx.clone(), guild_id));
+   handler.lock().await.add_global_event(TrackEvent::Error.into(), TrackErrorNotifier::new(serenity_context.clone(), handler.clone()));
 
    Ok(handler)
 }
