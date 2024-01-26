@@ -6,8 +6,8 @@ use songbird::serenity::SerenityInit;
 use reqwest::Client as HttpClient;
 use youtube_dl::SingleVideo;
 
-use crate::{StdError, StdResult};
-use crate::{error, commands};
+use crate::*;
+use helper::*;
 
 pub struct HttpKey;
 pub struct Search;
@@ -26,6 +26,14 @@ pub fn load_options() -> FrameworkOptions<Data, StdError> {
     poise::FrameworkOptions {
         commands: commands::get_commands(),
         on_error: |error| Box::pin(error::on_error(error)),
+        command_check: Some(|ctx| {
+            Box::pin(async move {
+                if !has_perm(&ctx).await {
+                    return Ok(false);
+                }
+                Ok(true)
+            })
+        }),
         skip_checks_for_owners: false,
         ..Default::default()
     }
