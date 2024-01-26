@@ -4,6 +4,7 @@ mod error;
 mod helper;
 
 use tokio;
+use crate::helper::*;
 use crate::bot::*;
 
 type StdError = Box<dyn std::error::Error + Send + Sync>;
@@ -13,14 +14,7 @@ type Context<'a> = poise::Context<'a, Data, StdError>;
 #[tokio::main]
 async fn main() {    
     let options = load_options();
-    let mut discord_bot = match load_bot(options).await {
-        Ok(bot) => bot,
-        Err(e) => {
-            panic!("Error making bot framework: {:?}", e);
-        }
-    };
+    let mut discord_bot = check_result(load_bot(options).await);
     
-    if let Err(e) = discord_bot.start().await {
-        panic!("Skill issue: {:?}", e);
-    }
+    check_result(discord_bot.start().await);
 }

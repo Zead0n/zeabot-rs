@@ -41,6 +41,7 @@ impl VoiceEventHandler for TrackErrorNotifier {
             }
          },
          EventContext::ClientDisconnect(_) => {
+            println!("Client disconnected");
             let mut songbird_call = self.handler.lock().await;
             let songbird_channel_id = songbird_call.current_channel().expect("No channel id found").0;
             let serenity_channel = check_result(serenity::ChannelId::from(songbird_channel_id).to_channel(&self.context).await);
