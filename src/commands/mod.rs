@@ -8,7 +8,6 @@ pub mod help;
 // Miscellaneous/Global functions & structs
 use std::sync::Arc;
 use serenity::prelude::Mutex;
-use serenity::all::GuildId;
 use songbird::Call;
 use songbird::events::{Event, EventContext, EventHandler as VoiceEventHandler, TrackEvent};
 use poise::serenity_prelude as serenity;

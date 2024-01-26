@@ -15,7 +15,7 @@ pub async fn skip(
         let queue = handler_lock.queue();
 
         check_result(queue.skip());
-        check_result(queue.skip());
+        check_result(ctx.say("Skipped current track").await);
     } else {
         check_result(ctx.say("Not in VC").await);
     }
