@@ -1,4 +1,5 @@
 use poise::serenity_prelude as serenity;
+use serenity::model::id::RoleId;
 use poise::reply::CreateReply;
 
 use crate::Context;
@@ -14,10 +15,11 @@ pub async fn has_perm(ctx: &Context<'_>) -> bool {
     let member = ctx.author_member().await.expect("No member found");
     let perm = match member.guild_id.get() {
         270329415404093440 => {
-            let roled = member.roles.contains(&serenity::RoleId::new(540989126803980289));
+            let roled = member.roles.contains(&RoleId::new(540989126803980289)) || member.roles.contains(&RoleId::new(540989126803980289));
+            let okami = member.user.id.get() == 153682548017463296;
             let bot_channel = ctx.channel_id() == serenity::ChannelId::new(360582111398330369);
 
-            if roled && bot_channel {
+            if (roled || okami) && bot_channel {
                 return true;
             }
 
