@@ -8,8 +8,10 @@ pub mod help;
 // Miscellaneous/Global functions & structs
 use std::sync::Arc;
 use serenity::prelude::Mutex;
-use songbird::Call;
-use songbird::events::{*, EventHandler as VoiceEventHandler};
+use serenity::cache::Cache;
+use serenity::model::channel::GuildChannel;
+use songbird::*;
+use songbird::events::EventHandler as VoiceEventHandler;
 use poise::serenity_prelude as serenity;
 use poise::async_trait;
 
@@ -18,15 +20,17 @@ use helper::*;
 use bot::Data;
 
 struct VoiceCallEvent {
-   _context: serenity::Context,
-   _handler: Arc<Mutex<Call>>,
+   manager: Arc<Songbird>,
+   channel: GuildChannel,
+   cache: Arc<Cache>,
 }
 
 impl VoiceCallEvent {
-   fn new(context: serenity::Context, handler: Arc<Mutex<Call>>) -> Self {
+   fn new(manager: Arc<Songbird>, channel: GuildChannel, cache: Arc<Cache>) -> Self {
       Self {
-         _context: context,
-         _handler: handler
+         manager,
+         channel,
+         cache,
       }
    }
 }
@@ -36,21 +40,13 @@ impl VoiceEventHandler for VoiceCallEvent {
    async fn act(&self, ctx: &EventContext<'_>) -> Option<Event> {
       match ctx {
          EventContext::ClientDisconnect(_) => {
-            // let manager = songbird::get(&self.context)
-            //    .await
-            //    .expect("Songbird Voice client placed in at initialisation.")
-            //    .clone();
-            // let songbird_call = self.handler.lock().await;
-            // let songbird_channel_id = songbird_call.current_channel().expect("No channel id found").0;
-            // let guild_channel = check_result(serenity::ChannelId::from(songbird_channel_id).to_channel(&self.context).await).guild().expect("No Guild found");
-            // println!("{}", check_result(guild_channel.members(&self.context)).len());
-            // let check_empty = check_result(guild_channel.members(&self.context)).len() <= 1;
-            // let guild_id = guild_channel.guild_id;
+            let check_empty = check_result(self.channel.members(&self.cache)).len() <= 1;
+            let guild_id = self.channel.guild_id;
 
-            // if check_empty {
-            //    check_result(manager.remove(guild_id).await);
-            // }
-         }
+            if check_empty {
+               check_result(self.manager.remove(guild_id).await);
+            }
+         },
          _ => {},
       }
 
@@ -112,7 +108,9 @@ pub async fn join_channel(ctx: Context<'_>) -> StdResult<Arc<Mutex<Call>>> {
       Err(e) => panic!("Bruh: {:?}", e),
    };
 
-   handler.lock().await.add_global_event(CoreEvent::ClientDisconnect.into(), VoiceCallEvent::new(serenity_context.clone(), handler.clone()));
+   let voice_channel = check_result(serenity::ChannelId::from(connect_to).to_channel(&ctx).await).guild().expect("No Guild found");
+
+   handler.lock().await.add_global_event(CoreEvent::ClientDisconnect.into(), VoiceCallEvent::new(manager, voice_channel, ctx.serenity_context().cache.clone()));
 
    Ok(handler)
 }
