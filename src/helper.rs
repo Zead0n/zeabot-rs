@@ -33,8 +33,8 @@ pub async fn has_perm(ctx: &Context<'_>) -> bool {
 
             return false;
         }
-        TEST_SERVER => return true,
-        MEME_CORP => return true,
+        TEST_SERVER => true,
+        MEME_CORP => true,
         _ => false,
     };
 
