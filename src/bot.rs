@@ -1,23 +1,15 @@
-use std::collections::HashMap;
 use poise::{FrameworkOptions, Framework};
 use poise::serenity_prelude as serenity;
-use serenity::prelude::Mutex;
 use songbird::serenity::SerenityInit;
 use reqwest::Client as HttpClient;
-use youtube_dl::SingleVideo;
 
 use crate::*;
 use helper::*;
 
 pub struct HttpKey;
-pub struct Search;
 
 impl serenity::prelude::TypeMapKey for HttpKey {
     type Value = HttpClient;
-}
-
-impl serenity::prelude::TypeMapKey for Search {
-    type Value = Mutex<HashMap<u8, SingleVideo>>;
 }
 
 pub struct Data {}
@@ -64,7 +56,6 @@ pub async fn load_bot(options: FrameworkOptions<Data, StdError>) -> StdResult<se
         .framework(framework)
         .register_songbird()
         .type_map_insert::<HttpKey>(HttpClient::new())
-        .type_map_insert::<Search>(Mutex::new(HashMap::new()))
         .await
         .expect("Failed creating discord client")
     )

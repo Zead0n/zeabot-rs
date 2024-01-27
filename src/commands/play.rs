@@ -36,7 +36,7 @@ pub async fn url(
       check_result(queue_up(ctx, url, handler).await);
    } else {
       let new_handler = commands::join_channel(ctx).await?;
-      check_result(queue_up(ctx, url, new_handler).await);
+      check_result(queue_up(ctx, url, new_handler).await)
    }
 
    Ok(())
@@ -53,16 +53,16 @@ pub async fn search(
    }
 
    if let Some(handler) = commands::handler_exist(ctx).await {
-      check_result(search_up(ctx, title, handler).await);
+      check_result(search_up(&ctx, title, handler).await);
    } else {
       let new_handler = commands::join_channel(ctx).await?;
-      check_result(search_up(ctx, title, new_handler).await);
+      check_result(search_up(&ctx, title, new_handler).await);
    }
 
    Ok(())
 }
 
-async fn search_up(ctx: Context<'_>, title: String, handler: Arc<Mutex<Call>>) -> StdResult<()> {
+async fn search_up(ctx: &Context<'_>, title: String, handler: Arc<Mutex<Call>>) -> StdResult<()> {
    check_result(ctx.defer().await);
 
    let search_result = YoutubeDl::search_for(&SearchOptions::youtube(title).with_count(5))
@@ -74,10 +74,8 @@ async fn search_up(ctx: Context<'_>, title: String, handler: Arc<Mutex<Call>>) -
    match search_result {
       YoutubeDlOutput::Playlist(playlist) => {
          let search_vec = playlist.entries.expect("Failed to get videos of playlist");
-         
-         if let Err(e) = search_init(ctx, search_vec, handler).await {
-            panic!("Error creating search embed: {:?}", e);
-         }
+
+         check_result(search_init(ctx, &search_vec, handler).await);
 
          Ok(())
       },
@@ -88,9 +86,9 @@ async fn search_up(ctx: Context<'_>, title: String, handler: Arc<Mutex<Call>>) -
    }
 }
 
-async fn search_init(ctx: Context<'_>, search: Vec<SingleVideo>, handler: Arc<Mutex<Call>>) -> StdResult<()> {
+async fn search_init(ctx: &Context<'_>, search: &Vec<SingleVideo>, handler: Arc<Mutex<Call>>) -> StdResult<()> {
    let mut index = 0;
-   let reply = check_result(ctx.send(search_msg(search.clone(), index).unwrap()).await);
+   let reply = check_result(ctx.send(search_msg(search, index).unwrap()).await);
 
    let msg = reply.message().await?;
    let mut interaction_stream = msg
@@ -113,7 +111,7 @@ async fn search_init(ctx: Context<'_>, search: Vec<SingleVideo>, handler: Arc<Mu
             check_result(interaction.create_response(
                &ctx, 
                serenity::CreateInteractionResponse::UpdateMessage(
-                  search_msg(search.clone(), index)
+                  search_msg(search, index)
                   .unwrap()
                   .to_slash_initial_response(serenity::CreateInteractionResponseMessage::new())
                )
@@ -131,7 +129,7 @@ async fn search_init(ctx: Context<'_>, search: Vec<SingleVideo>, handler: Arc<Mu
             check_result(interaction.create_response(
                &ctx, 
                serenity::CreateInteractionResponse::UpdateMessage(
-                  search_msg(search.clone(), index)
+                  search_msg(search, index)
                   .unwrap()
                   .to_slash_initial_response(serenity::CreateInteractionResponseMessage::new())
                )
@@ -163,23 +161,23 @@ async fn search_init(ctx: Context<'_>, search: Vec<SingleVideo>, handler: Arc<Mu
    Ok(())
 }
 
-pub fn search_msg(search: Vec<SingleVideo>, index: u8) -> StdResult<CreateReply> {
+pub fn search_msg(search: &Vec<SingleVideo>, index: u8) -> StdResult<CreateReply> {
    // let mut index_list = String::new();
    let mut song_list = String::new();
    for (k, v) in search.into_iter().enumerate() {
       match k {
          0 => {
             if 0 == index {
-               song_list.push_str(format!("__**{}**__", v.title.expect("No title found")).as_str());
+               song_list.push_str(format!("__**{}**__", v.title.clone().expect("No title found")).as_str());
             } else {
-               song_list.push_str(format!("{}", v.title.expect("No title found")).as_str());
+               song_list.push_str(format!("{}", v.title.clone().expect("No title found")).as_str());
             }
          }
          _ => {
             if k == index as usize {
-               song_list.push_str(format!("\n\n__**{}**__", v.title.expect("No title found")).as_str());
+               song_list.push_str(format!("\n\n__**{}**__", v.title.clone().expect("No title found")).as_str());
             } else {
-               song_list.push_str(format!("\n\n{}", v.title.expect("No title found")).as_str());
+               song_list.push_str(format!("\n\n{}", v.title.clone().expect("No title found")).as_str());
             }
          }
       }
