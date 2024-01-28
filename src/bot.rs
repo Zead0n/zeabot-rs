@@ -1,5 +1,6 @@
 use poise::{FrameworkOptions, Framework};
 use poise::serenity_prelude as serenity;
+use serenity::Settings as CacheSettings;
 use songbird::serenity::SerenityInit;
 use reqwest::Client as HttpClient;
 
@@ -44,6 +45,10 @@ pub async fn load_bot(options: FrameworkOptions<Data, StdError>) -> StdResult<se
         }
     };
 
+    let mut cache_settings = CacheSettings::default();
+    cache_settings.cache_guilds = false;
+    cache_settings.cache_users = false;
+
     let intents = serenity::GatewayIntents::non_privileged()
     | serenity::GatewayIntents::MESSAGE_CONTENT 
     | serenity::GatewayIntents::GUILDS 
@@ -56,6 +61,7 @@ pub async fn load_bot(options: FrameworkOptions<Data, StdError>) -> StdResult<se
         .framework(framework)
         .register_songbird()
         .type_map_insert::<HttpKey>(HttpClient::new())
+        .cache_settings(cache_settings)
         .await
         .expect("Failed creating discord client")
     )

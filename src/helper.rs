@@ -35,7 +35,10 @@ pub async fn has_perm(ctx: &Context<'_>) -> bool {
         }
         TEST_SERVER => true,
         MEME_CORP => true,
-        _ => false,
+        _ => {
+            println!("An unknown server has run a command");
+            false
+        },
     };
 
     if !perm {
