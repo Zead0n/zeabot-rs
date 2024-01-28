@@ -46,7 +46,6 @@ pub async fn load_bot(options: FrameworkOptions<Data, StdError>) -> StdResult<se
     };
 
     let mut cache_settings = CacheSettings::default();
-    cache_settings.cache_guilds = false;
     cache_settings.cache_users = false;
 
     let intents = serenity::GatewayIntents::non_privileged()
