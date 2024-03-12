@@ -4,6 +4,7 @@ use poise::reply::CreateReply;
 
 use crate::Context;
 
+// NEVER use this again bro
 pub fn check_result<T, E: std::fmt::Debug>(result: Result<T, E>) -> T {
     match result {
         Ok(success) => return success,

@@ -17,7 +17,10 @@ use helper::*;
 pub async fn play(
    ctx: Context<'_>,
 ) -> StdResult<()> {
-   check_result(ctx.say("Should require subsommand").await);
+   // check_result(ctx.say("Should require subsommand").await);
+   if let Err(e) = ctx.say("Should require subcommand").await {
+       panic!("Error sending play subcommand require message: {:?}", e);
+   }
 
    Ok(())
 }
@@ -33,10 +36,16 @@ pub async fn url(
    }
 
    if let Some(handler) = commands::handler_exist(ctx).await {
-      check_result(queue_up(ctx, url, handler).await);
+      // check_result(queue_up(ctx, url, handler).await);
+      if let Err(e) = queue_up(ctx, url, handler).await {
+          panic!("Error queuing play, existing handler: {:?}", e)
+      }
    } else {
       let new_handler = commands::join_channel(ctx).await?;
-      check_result(queue_up(ctx, url, new_handler).await)
+      // check_result(queue_up(ctx, url, new_handler).await)
+      if let Err(e) = queue_up(ctx, url, new_handler).await {
+          panic!("Error queuing play, new created handler: {:?}", e);
+      }
    }
 
    Ok(())
@@ -53,17 +62,26 @@ pub async fn search(
    }
 
    if let Some(handler) = commands::handler_exist(ctx).await {
-      check_result(search_up(&ctx, title, handler).await);
+      // check_result(search_up(&ctx, title, handler).await);
+      if let Err(e) = search_up(&ctx, title, handler).await {
+          panic!("Error queuing search, existing handler: {:?}", e);
+      }
    } else {
       let new_handler = commands::join_channel(ctx).await?;
-      check_result(search_up(&ctx, title, new_handler).await);
+      // check_result(search_up(&ctx, title, new_handler).await);
+      if let Err(e) = search_up(&ctx, title, new_handler).await {
+          panic!("Error queuing search, new created handler: {:?}", e);
+      }
    }
 
    Ok(())
 }
 
 async fn search_up(ctx: &Context<'_>, title: String, handler: Arc<Mutex<Call>>) -> StdResult<()> {
-   check_result(ctx.defer().await);
+   // check_result(ctx.defer().await);
+   if let Err(e) = ctx.defer().await {
+       panic!("Error deferring play search command: {:?}", e);
+   }
 
    let search_result = YoutubeDl::search_for(&SearchOptions::youtube(title).with_count(5))
       .socket_timeout("20")
@@ -75,7 +93,10 @@ async fn search_up(ctx: &Context<'_>, title: String, handler: Arc<Mutex<Call>>) 
       YoutubeDlOutput::Playlist(playlist) => {
          let search_vec = playlist.entries.expect("Failed to get videos of playlist");
 
-         check_result(search_init(ctx, &search_vec, handler).await);
+         // check_result(search_init(ctx, &search_vec, handler).await);
+         if let Err(e) = search_init(ctx, &search_vec, handler).await {
+             panic!("Error beginning search: {:?}", e);
+         }
 
          Ok(())
       },
@@ -88,7 +109,16 @@ async fn search_up(ctx: &Context<'_>, title: String, handler: Arc<Mutex<Call>>) 
 
 async fn search_init(ctx: &Context<'_>, search: &Vec<SingleVideo>, handler: Arc<Mutex<Call>>) -> StdResult<()> {
    let mut index = 0;
-   let reply = check_result(ctx.send(search_msg(search, index).unwrap()).await);
+   // let reply = check_result(ctx.send(search_msg(search, index).unwrap()).await);
+   let message_reply = match search_msg(search, index) {
+       Ok(message) => message,
+       Err(e) => panic!("Error creating search message: {:?}", e),
+   };
+   
+   let reply = match ctx.send(message_reply).await {
+       Ok(reply) => reply,
+       Err(e) => panic!("Error creating search message: {:?}", e),
+   };
 
    let msg = reply.message().await?;
    let mut interaction_stream = msg
