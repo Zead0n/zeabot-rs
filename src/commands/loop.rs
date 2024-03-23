@@ -1,4 +1,4 @@
-use poise::serenity_prelude as serenity;
+// use poise::serenity_prelude as serenity;
 use poise::reply::CreateReply;
 use songbird::tracks::LoopState;
 use crate::{Context, StdResult, commands};
@@ -32,10 +32,20 @@ pub async fn r#loop(
             if let Err(e) = current_track.disable_loop() {
                panic!("Error disabling loop: {:?}", e);
             }
+
+            let message = CreateReply::default().content("Disabled looping");
+            if let Err(e) = ctx.send(message).await {
+               panic!("Error sending disabling loop: {:?}", e);
+            }
          },
          LoopState::Finite(_) => {
             if let Err(e) = current_track.enable_loop() {
                panic!("Error enabling loop: {:?}", e);
+            }
+
+            let message = CreateReply::default().content("Enabled looping");
+            if let Err(e) = ctx.send(message).await {
+               panic!("Error sending enabling loop: {:?}", e);
             }
          }
       }
