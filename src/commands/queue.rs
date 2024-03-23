@@ -17,12 +17,12 @@
 //       }
 //       let reply: poise::reply::CreateReply = Default::default();
 //       let embed = serenity::CreateEmbed::new().field("Songs", queue_view, false);
-      
+
 //       if let Err(e) = ctx.send(poise::reply::CreateReply::embed(reply, embed)).await {
 //          panic!("failed to send queue: {:?}", e)
 //       }
 
-//    } 
+//    }
 
 //    Ok(())
 // }

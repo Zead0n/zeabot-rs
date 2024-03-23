@@ -1,5 +1,6 @@
 pub mod join;
 pub mod leave;
+pub mod r#loop;
 pub mod play;
 pub mod queue;
 pub mod skip;
@@ -67,6 +68,10 @@ pub fn get_commands() -> Vec<poise::Command<Data, StdError>> {
          ..play::play()
       },
       skip::skip(),
+      poise::Command {
+         name: String::from("loop"),
+         ..r#loop::r#loop()
+      },
       // queue::queue(),
    ]
 }
