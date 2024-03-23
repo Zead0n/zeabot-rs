@@ -33,6 +33,17 @@ pub async fn load_bot(options: FrameworkOptions<Data, StdError>) -> StdResult<se
     let framework = Framework::new(options, |ctx, _ready, framework| {
         Box::pin(async move {
             println!("Logged in as {}", _ready.user.name);
+            let bot_user = match ctx.http.get_current_user().await {
+                Ok(user) => user,
+                Err(e) => panic!("Error getting bot user: {:?}", e),
+            };
+            let new_avatar = match serenity::CreateAttachment::path("/data/avatar.gif").await {
+                Ok(avatar) => avatar,
+                Err(e) => panic!("Error getting avatar: {:?}", e),
+            };
+            let profile = serenity::EditProfile::new().avatar(&new_avatar);
+
+            bot_user.edit(ctx, profile).await?;
             poise::builtins::register_globally(ctx, &framework.options().commands).await?;
             Ok(Data {})
         })

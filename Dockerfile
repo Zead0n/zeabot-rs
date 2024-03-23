@@ -18,5 +18,6 @@ RUN cargo build --release --target x86_64-unknown-linux-musl
 # Put binaries in a minimal image
 FROM alpine:latest as final
 RUN apk add --no-cache yt-dlp
+RUN mkdir /data
 COPY --from=builder /zeabot/target/x86_64-unknown-linux-musl/release/zeabot /zeabot
 ENTRYPOINT ["/zeabot"]

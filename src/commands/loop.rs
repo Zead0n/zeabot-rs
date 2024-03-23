@@ -3,7 +3,7 @@ use poise::reply::CreateReply;
 use songbird::tracks::LoopState;
 use crate::{Context, StdResult, commands};
 
-/// Show queue
+/// Loop current track
 #[poise::command(slash_command)]
 pub async fn r#loop(
    ctx: Context<'_>
