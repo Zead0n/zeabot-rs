@@ -52,7 +52,7 @@ pub async fn load_bot(options: FrameworkOptions<Data, StdError>) -> StdResult<se
     let discord_token = match std::env::var("DISCORD_TOKEN") {
         Ok(token) => token,
         Err(e) => {
-            panic!("No DISCORD_TOKEN found: {}", e);
+            panic!("No DISCORD_TOKEN found: {:?}", e);
         }
     };
 
