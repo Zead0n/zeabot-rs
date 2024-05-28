@@ -42,7 +42,7 @@ pub async fn url(
           panic!("Error queuing play, existing handler: {:?}", e)
       }
    } else {
-      let new_handler = commands::join_channel(ctx).await?;
+      let new_handler: Arc<Mutex<Call>> = commands::join_channel(ctx).await?;
       // check_result(queue_up(ctx, url, new_handler).await)
       if let Err(e) = queue_up(ctx, url, new_handler).await {
           panic!("Error queuing play, new created handler: {:?}", e);
@@ -67,7 +67,7 @@ pub async fn search(
           panic!("Error queuing search, existing handler: {:?}", e);
       }
    } else {
-      let new_handler = commands::join_channel(ctx).await?;
+      let new_handler: Arc<Mutex<Call>> = commands::join_channel(ctx).await?;
       // check_result(search_up(&ctx, title, new_handler).await);
       if let Err(e) = search_up(&ctx, title, new_handler).await {
           panic!("Error queuing search, new created handler: {:?}", e);
@@ -97,31 +97,16 @@ async fn search_up(ctx: &Context<'_>, title: String, handler: Arc<Mutex<Call>>) 
    //    .run_async()
    //    .await?;
 
-   let search_result: Vec<AuxMetadata> = match SongbirdDl::new(http_client.clone(), title).search(5) {
-      Ok(serach) => search,
+   let search_result: Vec<AuxMetadata> = match SongbirdDl::new(http_client.clone(), title).search(Some(5)).await {
+      Ok(search) => search,
       Err(e) => panic!("Error searching: {:?}", e)
    };
 
-   if let Err(e) = search_init(ctx, &serach_result, handler) {
+   if let Err(e) = search_init(ctx, &search_result, handler).await {
       panic!("Error beginning serach: {:?}", e);
    }
 
-   // match search_result {
-   //    YoutubeDlOutput::Playlist(playlist) => {
-   //       let search_vec = playlist.entries.expect("Failed to get videos of playlist");
-   //
-   //       // check_result(search_init(ctx, &search_vec, handler).await);
-   //       if let Err(e) = search_init(ctx, &search_vec, handler).await {
-   //           panic!("Error beginning search: {:?}", e);
-   //       }
-   //
-   //       Ok(())
-   //    },
-   //    _ => {
-   //       println!("Something went wrong?");
-   //       Ok(())
-   //    }
-   // }
+   Ok(())
 }
 
 async fn search_init(ctx: &Context<'_>, search: &Vec<AuxMetadata>, handler: Arc<Mutex<Call>>) -> StdResult<()> {
