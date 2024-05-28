@@ -1,7 +1,9 @@
 use std::sync::Arc;
 use std::time::Duration;
 use std::usize;
-use serenity::builder::CreateButton;
+use std::borrow::Cow;
+use serenity::builder::{CreateButton, CreateEmbed, CreateActionRow};
+use serenity::all::Message;
 use serenity::futures::StreamExt;
 use serenity::prelude::Mutex;
 use poise::serenity_prelude as serenity;
@@ -122,7 +124,7 @@ async fn search_init(ctx: &Context<'_>, search: &Vec<AuxMetadata>, handler: Arc<
        Err(e) => panic!("Error creating search message: {:?}", e),
    };
 
-   let msg = reply.message().await?;
+   let msg: Cow<Message> = reply.message().await?;
    let mut interaction_stream = msg
       .clone()
       .await_component_interaction(&ctx.serenity_context().shard)
@@ -170,7 +172,7 @@ async fn search_init(ctx: &Context<'_>, search: &Vec<AuxMetadata>, handler: Arc<
          "select" => {
             check_result(ctx.defer().await);
 
-            let video = search.get(index as usize).expect("No video found in search").to_owned();
+            let video: AuxMetadata = search.get(index as usize).expect("No video found in search").to_owned();
             let http_client = {
                let data = ctx.serenity_context().data.read().await;
                data.get::<HttpKey>()
@@ -215,12 +217,12 @@ pub fn search_msg(search: &Vec<AuxMetadata>, index: u8) -> StdResult<CreateReply
       }
    }
 
-   let thumbnail_string: String = search.get(index as usize).expect("No video found in search").to_owned().thumbnail.expect("No thumbnail found");
-   let embed = serenity::CreateEmbed::new()
+   let thumbnail_string: &String = search.get(index as usize).expect("No video found in search").thumbnail.as_ref().expect("No thumbnail found");
+   let embed: CreateEmbed = serenity::CreateEmbed::new()
       .title("Search result").color((255, 0, 0))
       .field("Found tracks:", song_list, false)
       .thumbnail(thumbnail_string);
-   let components = serenity::CreateActionRow::Buttons(vec![
+   let components: CreateActionRow = serenity::CreateActionRow::Buttons(vec![
       CreateButton::new("up").emoji("⬆️".chars().next().unwrap()).style(serenity::ButtonStyle::Primary),
       CreateButton::new("down").emoji("⬇️".chars().next().unwrap()).style(serenity::ButtonStyle::Primary),
       CreateButton::new("select").emoji("🎵".chars().next().unwrap()).style(serenity::ButtonStyle::Success),
