@@ -1,6 +1,7 @@
 use crate::prelude::*;
 
 use lavalink_rs::client::LavalinkClient;
+use lavalink_rs::error::LavalinkError;
 use lavalink_rs::prelude::PlayerContext;
 use poise::async_trait;
 use poise::serenity_prelude as serenity;
@@ -95,6 +96,12 @@ impl SongbirdEventHandler for VoiceCallEvent {
                 return None;
             }
 
+            if self.songbird.get(guild_id).is_some() {
+                if let Err(e) = self.songbird.remove(guild_id).await {
+                    eprintln!("Error removeing Sonbird Call: {:?}", e);
+                }
+            }
+
             let player_context = self
                 .lavalink
                 .get_player_context(guild_id)
@@ -105,12 +112,9 @@ impl SongbirdEventHandler for VoiceCallEvent {
             }
 
             if let Err(e) = self.lavalink.delete_player(guild_id).await {
-                eprintln!("Error deleting lavalink player: {:?}", e)
-            }
-
-            if self.songbird.get(guild_id).is_some() {
-                if let Err(e) = self.songbird.remove(guild_id).await {
-                    eprintln!("Error removeing Sonbird Call: {:?}", e);
+                match e {
+                    LavalinkError::SerdeErrorJson(_) => {}
+                    _ => eprintln!("Error deleting player: {:?}", e),
                 }
             }
         }
@@ -212,7 +216,10 @@ pub async fn leave(ctx: &Context<'_>) -> Result<()> {
     }
 
     if let Err(e) = lava_client.delete_player(guild_id).await {
-        eprintln!("Error deleting player: {:?}", e);
+        match e {
+            LavalinkError::SerdeErrorJson(_) => {}
+            _ => eprintln!("Error deleting player: {:?}", e),
+        }
     }
 
     Ok(())
