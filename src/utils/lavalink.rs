@@ -45,7 +45,8 @@ async fn track_end(client: LavalinkClient, _session_id: String, event: &events::
     };
 
     if *player_data.looping.lock().await {
-        if let Err(e) = player_context.play_now(&event.track).await {
+        let queue = player_context.get_queue();
+        if let Err(e) = queue.push_to_front(event.track.clone()) {
             eprintln!("Error looping track: {:?}", e);
         }
     }

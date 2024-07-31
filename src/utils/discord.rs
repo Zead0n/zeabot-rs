@@ -193,6 +193,15 @@ pub async fn join(ctx: &Context<'_>) -> Result<PlayerContext> {
 pub async fn leave(ctx: &Context<'_>) -> Result<()> {
     let guild_id = ctx.guild_id().expect("No guild_id found");
 
+    let manager = songbird::get(ctx.serenity_context())
+        .await
+        .expect("Songbird Voice client placed in at initialisation")
+        .clone();
+
+    if manager.get(guild_id).is_some() {
+        manager.remove(guild_id).await?;
+    }
+
     let lava_client = &ctx.data().lavalink;
     let player_context = lava_client
         .get_player_context(guild_id)
@@ -202,15 +211,8 @@ pub async fn leave(ctx: &Context<'_>) -> Result<()> {
         eprintln!("Error stopping player: {:?}", e);
     }
 
-    lava_client.delete_player(guild_id).await?;
-
-    let manager = songbird::get(ctx.serenity_context())
-        .await
-        .expect("Songbird Voice client placed in at initialisation")
-        .clone();
-
-    if manager.get(guild_id).is_some() {
-        manager.remove(guild_id).await?;
+    if let Err(e) = lava_client.delete_player(guild_id).await {
+        eprintln!("Error deleting player: {:?}", e);
     }
 
     Ok(())

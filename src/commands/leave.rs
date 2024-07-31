@@ -8,7 +8,7 @@ pub async fn leave(ctx: Context<'_>) -> StdResult<()> {
     }
 
     discord::leave(&ctx).await?;
-    let _ = &ctx.say("https://tenor.com/view/suisei-oshimachi-suisei-the-first-take-peace-out-bye-bye-gif-27497602").await?;
+    discord::send_message(&ctx, "https://tenor.com/view/suisei-oshimachi-suisei-the-first-take-peace-out-bye-bye-gif-27497602").await;
 
     // let guild_id = ctx.guild_id().expect("Couldn't get guild_id for leave");
     // let manager = songbird::get(ctx.serenity_context())
