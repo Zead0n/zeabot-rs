@@ -78,11 +78,19 @@ async fn test_queue(
 
     let tracks: Vec<TrackInQueue> = match loaded_tracks.data {
         Some(TrackLoadData::Track(track)) => vec![track.into()],
-        Some(TrackLoadData::Playlist(playlist)) => playlist
-            .tracks
-            .iter()
-            .map(|track| track.clone().into())
-            .collect(),
+        Some(TrackLoadData::Playlist(playlist)) => {
+            let mut playlist_tracks: Vec<TrackInQueue> = Vec::new();
+            for i in 1..=10 {
+                playlist_tracks.push(playlist.tracks[i].clone().into());
+            }
+
+            playlist_tracks
+
+            // .tracks
+            // .iter()
+            // .map(|track| track.clone().into())
+            // .collect(),
+        }
         None => {
             eprintln!("No data found in Track");
             return Ok(());
@@ -93,26 +101,51 @@ async fn test_queue(
         }
     };
 
-    let mut message = String::new();
+    // let mut message = String::new();
 
-    if tracks.len() == 1 as usize {
-        let track_info = &tracks[0].track;
+    // let message = if tracks.len() == 1 as usize {
+    //     let track_info = &tracks[0].track;
 
-        match &track_info.info.uri {
-            Some(uri) => {
-                message = format!(
-                    "Added to queue: [{} - {}](<{}>)",
-                    track_info.info.author, track_info.info.title, uri
-                );
+    //     match &track_info.info.uri {
+    //         Some(uri) => {
+    //             format!(
+    //                 "Added to queue: [{} - {}](<{}>)",
+    //                 track_info.info.author, track_info.info.title, uri
+    //             )
+    //         }
+    //         None => {
+    //             format!(
+    //                 "Added to queue: [{} - {}]",
+    //                 track_info.info.author, track_info.info.title
+    //             )
+    //         }
+    //     }
+    // } else {
+    //     // TODO: Make message for Playlist
+    //     format!("Idk, something here")
+    // };
+
+    let message = tracks
+        .iter()
+        .map(|track| {
+            let track_data = &track.track;
+            match &track_data.info.uri {
+                Some(uri) => {
+                    format!(
+                        "Added to queue: [{} - {}](<{}>)",
+                        track_data.info.author, track_data.info.title, uri
+                    )
+                }
+                None => {
+                    format!(
+                        "Added to queue: [{} - {}]",
+                        track_data.info.author, track_data.info.title
+                    )
+                }
             }
-            None => {
-                message = format!(
-                    "Added to queue: [{} - {}]",
-                    track_info.info.author, track_info.info.title
-                );
-            }
-        }
-    }
+        })
+        .collect::<Vec<String>>()
+        .join("\n");
 
     let queue = player_context.get_queue();
     queue.append(tracks.into())?;
