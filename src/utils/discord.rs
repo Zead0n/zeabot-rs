@@ -130,6 +130,15 @@ impl SongbirdEventHandler for VoiceCallEvent {
                 return None;
             }
 
+            let player_context = self
+                .lavalink
+                .get_player_context(guild_id)
+                .expect("No PlayerContext found");
+
+            if let Err(e) = player_context.stop_now().await {
+                eprintln!("Error stopping player: {:?}", e);
+            }
+
             if let Err(e) = self.lavalink.delete_player(guild_id).await {
                 eprintln!("Error deleting lavalink player: {:?}", e)
             }
@@ -160,7 +169,7 @@ pub async fn send_message<S: Into<String>>(ctx: &Context<'_>, message: S) -> () 
 //     manager.get(guild_id)
 // }
 
-pub async fn get_player(ctx: &Context<'_>) -> Option<PlayerContext> {
+pub fn get_player(ctx: &Context<'_>) -> Option<PlayerContext> {
     let guild_id = ctx.guild_id().unwrap();
     let lava_client = &ctx.data().lavalink;
     lava_client.get_player_context(guild_id)
@@ -225,6 +234,14 @@ pub async fn leave(ctx: &Context<'_>) -> Result<()> {
     let guild_id = ctx.guild_id().expect("No guild_id found");
 
     let lava_client = &ctx.data().lavalink;
+    let player_context = lava_client
+        .get_player_context(guild_id)
+        .expect("No PlayerContext found");
+
+    if let Err(e) = player_context.stop_now().await {
+        eprintln!("Error stopping player: {:?}", e);
+    }
+
     lava_client.delete_player(guild_id).await?;
 
     let manager = songbird::get(ctx.serenity_context())
