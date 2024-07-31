@@ -8,6 +8,12 @@ pub async fn skip(ctx: Context<'_>) -> StdResult<()> {
         return Ok(());
     }
 
+    if let Some(player_context) = discord::get_player(&ctx) {
+        player_context.skip()?;
+    } else {
+        discord::send_message(&ctx, "Not in a Voice Channel").await;
+    }
+
     // if let Some(handler) = commands::handler_exist(ctx).await {
     //     let handler_lock = handler.lock().await;
     //     let queue = handler_lock.queue();

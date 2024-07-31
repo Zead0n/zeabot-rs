@@ -38,7 +38,7 @@ pub async fn url(ctx: Context<'_>, #[description = "Enter a URL"] url: String) -
 
     // let lava_client = &ctx.data().lavalink;
 
-    match discord::get_player(&ctx).await {
+    match discord::get_player(&ctx) {
         Some(player_context) => test_queue(&ctx, &player_context, &url).await?,
         None => {
             let new_player_context = discord::join(&ctx).await?;
@@ -80,7 +80,7 @@ async fn test_queue(
         Some(TrackLoadData::Track(track)) => vec![track.into()],
         Some(TrackLoadData::Playlist(playlist)) => {
             let mut playlist_tracks: Vec<TrackInQueue> = Vec::new();
-            for i in 1..=10 {
+            for i in 0..=9 {
                 playlist_tracks.push(playlist.tracks[i].clone().into());
             }
 
