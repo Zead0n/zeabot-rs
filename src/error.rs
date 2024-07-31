@@ -1,7 +1,28 @@
-use crate::StdError;
-use crate::bot::Data;
+pub type StandardError = Box<dyn std::error::Error + Send + Sync>;
+use crate::prelude::Data;
 
-pub async fn on_error(error: poise::FrameworkError<'_, Data, StdError>) {
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error("Generic {0}")]
+    Generic(String),
+
+    #[error(transparent)]
+    UnexpectedError(StandardError),
+
+    #[error(transparent)]
+    EnvVarError(#[from] std::env::VarError),
+
+    #[error(transparent)]
+    SerenityError(#[from] serenity::Error),
+
+    #[error(transparent)]
+    SongbirdJoinError(#[from] songbird::error::JoinError),
+
+    #[error(transparent)]
+    LavalinkError(#[from] lavalink_rs::error::LavalinkError),
+}
+
+pub async fn on_error(error: poise::FrameworkError<'_, Data, StandardError>) {
     match error {
         poise::FrameworkError::Setup { error, .. } => panic!("Failed to start bot: {:?}", error),
         poise::FrameworkError::Command { error, ctx, .. } => {

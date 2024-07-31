@@ -7,18 +7,32 @@ edition = "2021"
 
 [dependencies]
 #Async
-tokio = { version = "1.35.1", features=["full"] }
+tokio = { version = "1.35.1", features = ["full"] }
 
 #Discord
-serenity = { version = "0.12.0", default-features = false, features = ["client", "gateway", "rustls_backend", "model", "cache", "voice"] }
+serenity = { version = "0.12.0", default-features = false, features = [
+    "client",
+    "gateway",
+    "rustls_backend",
+    "model",
+    "cache",
+    "voice",
+] }
 poise = "0.6.1" #Outdated for now
-songbird = { version = "0.4.1", features = ["driver", "gateway", "builtin-queue"] }
+#Discord player
+songbird = { version = "0.4.3", features = [
+    "driver",
+    "gateway",
+    "builtin-queue",
+] }
+lavalink-rs = { version = "0.12.0", features = ["serenity", "songbird"] }
 
 #Web
 reqwest = "0.11.23"
 
 #Misc
+thiserror = "1"
 youtube_dl = { version = "0.9.0", features = ["tokio"] }
 symphonia = { version = "0.5.3", features = ["aac", "alac", "mp3"] }
-openssl = { version = "0.10", features = ["vendored"] }
 time = "0.3.36"
+openssl = { version = "0.10", features = ["vendored"] }

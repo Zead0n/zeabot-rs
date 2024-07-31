@@ -1,18 +1,15 @@
-use crate::*;
-use helper::*;
+use crate::prelude::*;
+use crate::utils::*;
 
 ///Join test
 #[poise::command(slash_command)]
-pub async fn join(
-   ctx: Context<'_>
-) -> StdResult<()> {
-   if !has_perm(&ctx).await {
-      return Ok(());
-   }
+pub async fn join(ctx: Context<'_>) -> StdResult<()> {
+    if !discord::has_perm(&ctx).await? {
+        return Ok(());
+    }
 
-   check_result(commands::join_channel(ctx).await);
+    discord::join(&ctx).await;
+    &ctx.say("SUICHAN WAAAAAA").await?;
 
-   check_result(ctx.say("Joined Channel").await);
-
-   Ok(())
+    Ok(())
 }

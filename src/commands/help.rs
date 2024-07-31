@@ -1,4 +1,4 @@
-use crate::{Context, StdResult};
+use crate::prelude::*;
 
 /// Show this help menu
 #[poise::command(track_edits, slash_command)]

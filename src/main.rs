@@ -1,24 +1,24 @@
 mod bot;
 mod commands;
 mod error;
-mod helper;
+mod prelude;
+mod utils;
 
-use tokio;
 use crate::bot::*;
+use crate::prelude::*;
 
-type StdError = Box<dyn std::error::Error + Send + Sync>;
-type StdResult<T> = std::result::Result<T, StdError>;
-type Context<'a> = poise::Context<'a, Data, StdError>;
+// type StdError = Box<dyn std::error::Error + Send + Sync>;
+// type StdResult<T> = std::result::Result<T, StdError>;
+// type Context<'a> = poise::Context<'a, Data, StdError>;
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<()> {
     let options = load_options();
-    let mut discord_bot = match load_bot(options).await {
-        Ok(bot) => bot,
-        Err(e) => panic!("Error loading bot: {:?}", e),
-    };
+    let mut discord_bot = load_bot(options).await?;
 
     if let Err(e) = discord_bot.start().await {
         panic!("Discord bot failed to start (Using nvim btw): {:?}", e);
     }
+
+    Ok(())
 }
