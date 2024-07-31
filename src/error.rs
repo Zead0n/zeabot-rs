@@ -1,14 +1,13 @@
 pub type StandardError = Box<dyn std::error::Error + Send + Sync>;
-use crate::prelude::Data;
+use crate::prelude::DiscordData;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
     #[error("Generic {0}")]
     Generic(String),
 
-    #[error(transparent)]
-    UnexpectedError(StandardError),
-
+    // #[error(transparent)]
+    // UnexpectedError(StandardError),
     #[error(transparent)]
     EnvVarError(#[from] std::env::VarError),
 
@@ -22,7 +21,7 @@ pub enum Error {
     LavalinkError(#[from] lavalink_rs::error::LavalinkError),
 }
 
-pub async fn on_error(error: poise::FrameworkError<'_, Data, StandardError>) {
+pub async fn on_error(error: poise::FrameworkError<'_, DiscordData, StandardError>) {
     match error {
         poise::FrameworkError::Setup { error, .. } => panic!("Failed to start bot: {:?}", error),
         poise::FrameworkError::Command { error, ctx, .. } => {

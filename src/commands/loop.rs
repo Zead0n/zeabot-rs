@@ -1,11 +1,23 @@
-// use poise::serenity_prelude as serenity;
 use crate::prelude::*;
-// use poise::reply::CreateReply;
-// use songbird::tracks::LoopState;
+use crate::utils::*;
 
 /// Loop current track
 #[poise::command(slash_command)]
 pub async fn r#loop(ctx: Context<'_>) -> StdResult<()> {
+    match discord::get_player(&ctx) {
+        Some(player_context) => {
+            let player_data = &player_context.data::<LavalinkData>()?;
+            let mut looping = player_data.looping.lock().await;
+
+            if *looping {
+                *looping = false;
+            } else {
+                *looping = true;
+            }
+        }
+        None => discord::send_message(&ctx, "Not in Voice channel").await,
+    }
+
     // if let Some(handler) = commands::handler_exist(ctx).await {
     //     let handler_lock = handler.lock().await;
     //     let current_track = match handler_lock.queue().current() {

@@ -7,10 +7,6 @@ mod utils;
 use crate::bot::*;
 use crate::prelude::*;
 
-// type StdError = Box<dyn std::error::Error + Send + Sync>;
-// type StdResult<T> = std::result::Result<T, StdError>;
-// type Context<'a> = poise::Context<'a, Data, StdError>;
-
 #[tokio::main]
 async fn main() -> Result<()> {
     let options = load_options();

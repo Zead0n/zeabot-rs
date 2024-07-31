@@ -27,12 +27,8 @@ songbird = { version = "0.4.3", features = [
 ] }
 lavalink-rs = { version = "0.12.0", features = ["serenity", "songbird"] }
 
-#Web
-# reqwest = "0.11.23"
-
 #Misc
+futures = "0.3.30"
 thiserror = "1"
-# youtube_dl = { version = "0.9.0", features = ["tokio"] }
-# symphonia = { version = "0.5.3", features = ["aac", "alac", "mp3"] }
 time = "0.3.36"
 openssl = { version = "0.10", features = ["vendored"] }

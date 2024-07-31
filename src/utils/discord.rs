@@ -80,41 +80,6 @@ impl VoiceCallEvent {
 #[async_trait]
 impl SongbirdEventHandler for VoiceCallEvent {
     async fn act(&self, ctx: &EventContext<'_>) -> Option<Event> {
-        // match ctx {
-        //     EventContext::ClientDisconnect(_) => {
-        //         let member_count = match self.channel.members(&self.cache) {
-        //             Ok(count) => count,
-        //             Err(e) => {
-        //                 println!("Failed to get player count");
-        //                 return None;
-        //             }
-        //         };
-        //
-        //         let guild_id = self.channel.guild_id;
-        //
-        //         if member_count.len() <= 1 {
-        //             check_result(self.manager.remove(guild_id).await);
-        //         }
-        //     }
-        //     _ => {}
-        // }
-
-        // if let EventContext::ClientDisconnect(_) = ctx {
-        //     let member_count = match self.channel.members(&self.cache) {
-        //         Ok(count) => count,
-        //         Err(e) => {
-        //             eprintln!("Failed to get player count: {:?}", e);
-        //             return None;
-        //         }
-        //     };
-
-        //     let guild_id = self.channel.guild_id;
-
-        //     if member_count.len() <= 1 {
-        //         check_result(self.manager.remove(guild_id).await);
-        //     }
-        // }
-
         if let EventContext::ClientDisconnect(_) = ctx {
             let members = match self.guild_channel.members(&self.cache) {
                 Ok(count) => count,
@@ -159,15 +124,6 @@ pub async fn send_message<S: Into<String>>(ctx: &Context<'_>, message: S) -> () 
         eprintln!("Error sending message: {:?}", e);
     }
 }
-
-// pub async fn get_call(ctx: &Context<'_>) -> Option<Arc<Mutex<Call>>> {
-//     let guild_id = ctx.guild_id().unwrap();
-//     let manager = songbird::get(ctx.serenity_context())
-//         .await
-//         .expect("Songbird Voice client placed in at initialisation.");
-
-//     manager.get(guild_id)
-// }
 
 pub fn get_player(ctx: &Context<'_>) -> Option<PlayerContext> {
     let guild_id = ctx.guild_id().unwrap();
@@ -221,7 +177,11 @@ pub async fn join(ctx: &Context<'_>) -> Result<PlayerContext> {
             );
 
             lava_client
-                .create_player_context(guild_id, connection_info)
+                .create_player_context_with_data(
+                    guild_id,
+                    connection_info,
+                    Arc::new(LavalinkData::default()),
+                )
                 .await?
         }
         Err(e) => return Err(e.into()),
@@ -255,54 +215,3 @@ pub async fn leave(ctx: &Context<'_>) -> Result<()> {
 
     Ok(())
 }
-
-// pub async fn join_channel(ctx: &Context<'_>) -> Result<Arc<Mutex<Call>>> {
-//     let (guild_id, channel_id) = {
-//         let guild = ctx.guild().expect("Couldn't get guild for join_channel");
-//         let channel = guild
-//             .voice_states
-//             .get(&ctx.author().id)
-//             .and_then(|voice_state| voice_state.channel_id);
-//         (guild.id, channel)
-//     };
-
-//     let connect_to = match channel_id {
-//         Some(channel) => channel,
-//         None => {
-//             check_result(ctx.say("Where you at?").await);
-//             return Err(Error::Generic("Failed to get channel_id".into()));
-//         }
-//     };
-
-//     let serenity_context = ctx.serenity_context();
-//     let manager = songbird::get(serenity_context)
-//         .await
-//         .expect("Songbird Voice client placed in at initialisation.")
-//         .clone();
-//     let handler = manager.join(guild_id, connect_to).await?;
-
-//     let voice_channel = check_result(serenity::ChannelId::from(connect_to).to_channel(ctx).await)
-//         .guild()
-//         .expect("No Guild found");
-
-//     handler.lock().await.add_global_event(
-//         CoreEvent::ClientDisconnect.into(),
-//         VoiceCallEvent::new(ctx.cooldown_context()),
-//     );
-
-//     Ok(handler)
-// }
-
-// pub async fn leave_channel(ctx: &Context<'_>) -> Result<()> {
-//     let guild_id = ctx.guild_id().expect("Couldn't get guild_id for leave");
-//     let manager = songbird::get(ctx.serenity_context())
-//         .await
-//         .expect("Songbird Voice client placed in at initialisation.")
-//         .clone();
-
-//     if manager.get(guild_id).is_some() {
-//         manager.remove(guild_id).await?;
-//     }
-
-//     Ok(())
-// }

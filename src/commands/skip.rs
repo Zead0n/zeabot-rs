@@ -10,6 +10,7 @@ pub async fn skip(ctx: Context<'_>) -> StdResult<()> {
 
     if let Some(player_context) = discord::get_player(&ctx) {
         player_context.skip()?;
+        discord::send_message(&ctx, "Skipped current track").await;
     } else {
         discord::send_message(&ctx, "Not in a Voice Channel").await;
     }

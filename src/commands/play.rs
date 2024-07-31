@@ -1,5 +1,5 @@
 use lavalink_rs::prelude::*;
-// use lavalink_rs::model::track::TrackData;
+// use lavalink_rs::model::track::TrackDiscordData;
 // use poise::reply::CreateReply;
 // use poise::serenity_prelude as serenity;
 // use serenity::all::Message;
@@ -36,28 +36,14 @@ pub async fn url(ctx: Context<'_>, #[description = "Enter a URL"] url: String) -
         return Ok(());
     }
 
-    // let lava_client = &ctx.data().lavalink;
-
     match discord::get_player(&ctx) {
         Some(player_context) => test_queue(&ctx, &player_context, &url).await?,
         None => {
+            ctx.defer().await?;
             let new_player_context = discord::join(&ctx).await?;
             test_queue(&ctx, &new_player_context, &url).await?;
         }
     };
-
-    // if let Some(handler) = commands::handler_exist(ctx).await {
-    //     // check_result(queue_up(ctx, url, handler).await);
-    //     if let Err(e) = queue_up(ctx, url, handler).await {
-    //         panic!("Error queuing play, existing handler: {:?}", e)
-    //     }
-    // } else {
-    //     let new_handler: Arc<Mutex<Call>> = commands::join_channel(ctx).await?;
-    //     // check_result(queue_up(ctx, url, new_handler).await)
-    //     if let Err(e) = queue_up(ctx, url, new_handler).await {
-    //         panic!("Error queuing play, new created handler: {:?}", e);
-    //     }
-    // }
 
     Ok(())
 }
@@ -81,7 +67,10 @@ async fn test_queue(
         Some(TrackLoadData::Playlist(playlist)) => {
             let mut playlist_tracks: Vec<TrackInQueue> = Vec::new();
             for i in 0..=9 {
-                playlist_tracks.push(playlist.tracks[i].clone().into());
+                match playlist.tracks.get(i) {
+                    Some(track) => playlist_tracks.push(track.clone().into()),
+                    None => continue,
+                }
             }
 
             playlist_tracks
@@ -100,30 +89,6 @@ async fn test_queue(
             return Ok(());
         }
     };
-
-    // let mut message = String::new();
-
-    // let message = if tracks.len() == 1 as usize {
-    //     let track_info = &tracks[0].track;
-
-    //     match &track_info.info.uri {
-    //         Some(uri) => {
-    //             format!(
-    //                 "Added to queue: [{} - {}](<{}>)",
-    //                 track_info.info.author, track_info.info.title, uri
-    //             )
-    //         }
-    //         None => {
-    //             format!(
-    //                 "Added to queue: [{} - {}]",
-    //                 track_info.info.author, track_info.info.title
-    //             )
-    //         }
-    //     }
-    // } else {
-    //     // TODO: Make message for Playlist
-    //     format!("Idk, something here")
-    // };
 
     let message = tracks
         .iter()

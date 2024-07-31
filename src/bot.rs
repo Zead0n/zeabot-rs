@@ -1,33 +1,28 @@
-use lavalink_rs::client::LavalinkClient;
-use lavalink_rs::model::events;
-use lavalink_rs::node::NodeBuilder;
-use lavalink_rs::prelude::NodeDistributionStrategy;
 use poise::serenity_prelude as serenity;
 use poise::{Framework, FrameworkOptions};
 use serenity::Settings as CacheSettings;
 use songbird::serenity::SerenityInit;
-// use crate::*;
 
 use crate::commands::get_commands;
 use crate::error::*;
-use crate::prelude::{Data, Result};
-use crate::utils::discord::has_perm;
+use crate::prelude::*;
+use crate::utils::*;
 
-// pub struct Data {}
-
-pub fn load_options() -> FrameworkOptions<Data, StandardError> {
+pub fn load_options() -> FrameworkOptions<DiscordData, StandardError> {
     poise::FrameworkOptions {
         commands: get_commands(),
         on_error: |error| Box::pin(on_error(error)),
         command_check: Some(|ctx| {
-            Box::pin(async move { Ok(has_perm(&ctx).await.unwrap_or(false)) })
+            Box::pin(async move { Ok(discord::has_perm(&ctx).await.unwrap_or(false)) })
         }),
         skip_checks_for_owners: false,
         ..Default::default()
     }
 }
 
-pub async fn load_bot(options: FrameworkOptions<Data, StandardError>) -> Result<serenity::Client> {
+pub async fn load_bot(
+    options: FrameworkOptions<DiscordData, StandardError>,
+) -> Result<serenity::Client> {
     let framework = Framework::new(options, |ctx, _ready, framework| {
         Box::pin(async move {
             println!("Logged in as {}", _ready.user.name);
@@ -44,30 +39,38 @@ pub async fn load_bot(options: FrameworkOptions<Data, StandardError>) -> Result<
             poise::builtins::register_globally(ctx, &framework.options().commands).await?;
 
             // Create LavalinkClient
-            let lavalink_password = match std::env::var("LAVALINK_PASSWORD") {
-                Ok(token) => token,
-                Err(e) => panic!("Failed to obtain LAVALINK_PASSWORD: {:?}", e),
-            };
+            // let lavalink_password = match std::env::var("LAVALINK_PASSWORD") {
+            //     Ok(token) => token,
+            //     Err(e) => panic!("Failed to obtain LAVALINK_PASSWORD: {:?}", e),
+            // };
 
-            let user_id_raw: u64 = ctx.cache.current_user().id.into();
+            let user_id = ctx.cache.current_user().id;
 
-            let node_local = NodeBuilder {
-                hostname: "lavalink:2333".to_string(),
-                is_ssl: false,
-                events: events::Events::default(),
-                password: lavalink_password,
-                user_id: user_id_raw.into(),
-                session_id: None,
-            };
+            // let node_local = NodeBuilder {
+            //     hostname: "lavalink:2333".to_string(),
+            //     is_ssl: false,
+            //     events: events::Events::default(),
+            //     password: lavalink_password,
+            //     user_id: user_id_raw.into(),
+            //     session_id: None,
+            // };
 
-            let lava_client = LavalinkClient::new(
-                events::Events::default(),
-                vec![node_local],
-                NodeDistributionStrategy::new(),
-            )
-            .await;
+            // let custom_events = events::Events {
+            //     track_end: Some()
+            //     ..Default::default()
+            // };
 
-            Ok(Data {
+            // let lava_client = LavalinkClient::new_with_data(
+            //     events::Events::default(),
+            //     vec![node_local],
+            //     NodeDistributionStrategy::new(),
+            //     Arc::new(LavalinkData::default()),
+            // )
+            // .await;
+
+            let lava_client = lavalink::create_lavalink_client(user_id.into()).await?;
+
+            Ok(DiscordData {
                 lavalink: lava_client,
             })
         })

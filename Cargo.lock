@@ -3452,6 +3452,7 @@ dependencies = [
 name = "zeabot"
 version = "0.1.0"
 dependencies = [
+ "futures",
  "lavalink-rs",
  "openssl",
  "poise",
