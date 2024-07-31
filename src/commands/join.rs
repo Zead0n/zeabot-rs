@@ -8,8 +8,8 @@ pub async fn join(ctx: Context<'_>) -> StdResult<()> {
         return Ok(());
     }
 
-    discord::join(&ctx).await;
-    &ctx.say("SUICHAN WAAAAAA").await?;
+    discord::join(&ctx).await?;
+    let _ = &ctx.say("SUICHAN WAAAAAA").await?;
 
     Ok(())
 }

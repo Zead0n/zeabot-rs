@@ -32,7 +32,7 @@ pub async fn url(ctx: Context<'_>, #[description = "Enter a URL"] url: String) -
     }
 
     if !url.starts_with("http") {
-        &ctx.say("Ain't no url bruh").await?;
+        discord::send_message(&ctx, "Ain't no url bruh").await;
         return Ok(());
     }
 
@@ -41,7 +41,8 @@ pub async fn url(ctx: Context<'_>, #[description = "Enter a URL"] url: String) -
     match discord::get_player(&ctx).await {
         Some(player_context) => test_queue(&ctx, &player_context, &url).await?,
         None => {
-            panic!("?");
+            let new_player_context = discord::join(&ctx).await?;
+            test_queue(&ctx, &new_player_context, &url).await?;
         }
     };
 
@@ -92,8 +93,31 @@ async fn test_queue(
         }
     };
 
+    let mut message = String::new();
+
+    if tracks.len() == 1 as usize {
+        let track_info = &tracks[0].track;
+
+        match &track_info.info.uri {
+            Some(uri) => {
+                message = format!(
+                    "Added to queue: [{} - {}](<{}>)",
+                    track_info.info.author, track_info.info.title, uri
+                );
+            }
+            None => {
+                message = format!(
+                    "Added to queue: [{} - {}]",
+                    track_info.info.author, track_info.info.title
+                );
+            }
+        }
+    }
+
     let queue = player_context.get_queue();
     queue.append(tracks.into())?;
+
+    discord::send_message(ctx, message).await;
 
     if let Ok(player) = player_context.get_player().await {
         if player.track.is_none() && queue.get_count().await? > 0 as usize {

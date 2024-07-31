@@ -8,7 +8,6 @@ use poise::serenity_prelude::RoleId;
 use poise::CreateReply;
 use serenity::cache::Cache;
 use serenity::model::channel::GuildChannel;
-use serenity::prelude::Mutex;
 use songbird::EventHandler as SongbirdEventHandler;
 use songbird::*;
 use std::sync::Arc;
@@ -146,7 +145,7 @@ impl SongbirdEventHandler for VoiceCallEvent {
     }
 }
 
-pub async fn send_message(ctx: &Context<'_>, message: String) -> () {
+pub async fn send_message<S: Into<String>>(ctx: &Context<'_>, message: S) -> () {
     if let Err(e) = ctx.send(CreateReply::default().content(message)).await {
         eprintln!("Error sending message: {:?}", e);
     }
@@ -225,13 +224,13 @@ pub async fn join(ctx: &Context<'_>) -> Result<PlayerContext> {
 pub async fn leave(ctx: &Context<'_>) -> Result<()> {
     let guild_id = ctx.guild_id().expect("No guild_id found");
 
+    let lava_client = &ctx.data().lavalink;
+    lava_client.delete_player(guild_id).await?;
+
     let manager = songbird::get(ctx.serenity_context())
         .await
         .expect("Songbird Voice client placed in at initialisation")
         .clone();
-
-    let lava_client = &ctx.data().lavalink;
-    lava_client.delete_player(guild_id).await?;
 
     if manager.get(guild_id).is_some() {
         manager.remove(guild_id).await?;

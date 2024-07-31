@@ -4,7 +4,6 @@ use lavalink_rs::node::NodeBuilder;
 use lavalink_rs::prelude::NodeDistributionStrategy;
 use poise::serenity_prelude as serenity;
 use poise::{Framework, FrameworkOptions};
-use reqwest::Client as HttpClient;
 use serenity::Settings as CacheSettings;
 use songbird::serenity::SerenityInit;
 // use crate::*;
@@ -13,12 +12,6 @@ use crate::commands::get_commands;
 use crate::error::*;
 use crate::prelude::{Data, Result};
 use crate::utils::discord::has_perm;
-
-pub struct HttpKey;
-
-impl serenity::prelude::TypeMapKey for HttpKey {
-    type Value = HttpClient;
-}
 
 // pub struct Data {}
 

@@ -1,5 +1,4 @@
 use lavalink_rs::client::LavalinkClient;
-use std::rc::Rc;
 
 pub use crate::error::{Error, StandardError};
 
