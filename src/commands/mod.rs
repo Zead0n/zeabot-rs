@@ -20,10 +20,10 @@ pub fn get_commands() -> Vec<poise::Command<DiscordData, StandardError>> {
         // },
         play::play(),
         skip::skip(),
-        // poise::Command {
-        //     name: String::from("loop"),
-        //     ..r#loop::r#loop()
-        // },
+        poise::Command {
+            name: String::from("loop"),
+            ..r#loop::r#loop()
+        },
         // queue::queue(),
     ]
 }
