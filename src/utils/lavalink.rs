@@ -34,21 +34,6 @@ pub async fn create_lavalink_client(user_id: UserId) -> Result<LavalinkClient> {
 }
 
 #[lavalink_rs::hook]
-async fn track_start(client: LavalinkClient, _session_id: String, event: &events::TrackStart) {
-    let player_context = client
-        .get_player_context(event.guild_id)
-        .expect("No PlayerContext found");
-
-    let Ok(player_data) = player_context.data::<PlayerData>() else {
-        eprintln!("Failed getting PlayerData");
-        return;
-    };
-
-    let mut deref_player_data = *player_data;
-    deref_player_data.stop_timeout();
-}
-
-#[lavalink_rs::hook]
 async fn track_end(client: LavalinkClient, _session_id: String, event: &events::TrackEnd) {
     let player_context = client
         .get_player_context(event.guild_id)
@@ -63,18 +48,6 @@ async fn track_end(client: LavalinkClient, _session_id: String, event: &events::
         let queue = player_context.get_queue();
         if let Err(e) = queue.push_to_front(event.track.clone()) {
             eprintln!("Error looping track: {:?}", e);
-        }
-    }
-
-    let mut deref_player_data = *player_data;
-    match deref_player_data.start_timeout() {
-        TimeoutStatus::Resetted => {
-            println!("Timeout resetted");
-            println!("{:#?}", deref_player_data);
-        }
-        TimeoutStatus::TimedOut => {
-            println!("Timeout need to leave");
-            println!("{:#?}", deref_player_data);
         }
     }
 }
