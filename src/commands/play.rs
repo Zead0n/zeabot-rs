@@ -37,22 +37,18 @@ pub async fn url(ctx: Context<'_>, #[description = "Enter a URL"] url: String) -
     }
 
     match discord::get_player(&ctx) {
-        Some(player_context) => test_queue(&ctx, &player_context, &url).await?,
+        Some(player_context) => add_to_queue(&ctx, &player_context, &url).await?,
         None => {
             ctx.defer().await?;
             let new_player_context = discord::join(&ctx).await?;
-            test_queue(&ctx, &new_player_context, &url).await?;
+            add_to_queue(&ctx, &new_player_context, &url).await?;
         }
     };
 
     Ok(())
 }
 
-async fn test_queue(
-    ctx: &Context<'_>,
-    player_context: &PlayerContext,
-    song: &String,
-) -> Result<()> {
+async fn add_to_queue(ctx: &Context<'_>, player_context: &PlayerContext, song: &str) -> Result<()> {
     let lava_client = &ctx.data().lavalink;
 
     let loaded_tracks = lava_client
