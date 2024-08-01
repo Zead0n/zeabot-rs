@@ -114,7 +114,7 @@ pub async fn leave(ctx: &Context<'_>) -> Result<()> {
         manager.remove(guild_id).await?;
     }
 
-    let lava_client = ctx.data().lavalink.clone();
+    let lava_client = &ctx.data().lavalink;
     let player_context = lava_client
         .get_player_context(guild_id)
         .expect("No PlayerContext found");
