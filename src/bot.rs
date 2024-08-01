@@ -64,7 +64,7 @@ pub async fn load_bot(
             //     events::Events::default(),
             //     vec![node_local],
             //     NodeDistributionStrategy::new(),
-            //     Arc::new(LavalinkData::default()),
+            //     Arc::new(PlayerData::default()),
             // )
             // .await;
 

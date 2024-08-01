@@ -1,16 +1,8 @@
 use crate::prelude::*;
 
-use lavalink_rs::client::LavalinkClient;
-use lavalink_rs::error::LavalinkError;
 use lavalink_rs::prelude::PlayerContext;
-use poise::async_trait;
-use poise::serenity_prelude as serenity;
 use poise::serenity_prelude::RoleId;
 use poise::CreateReply;
-use serenity::cache::Cache;
-use serenity::model::channel::GuildChannel;
-use songbird::EventHandler as SongbirdEventHandler;
-use songbird::*;
 use std::sync::Arc;
 
 const TEST_SERVER: u64 = 884664077643829248;
@@ -55,74 +47,6 @@ pub async fn has_perm(ctx: &Context<'_>) -> Result<bool> {
     Ok(perm)
 }
 
-struct VoiceCallEvent {
-    lavalink: LavalinkClient,
-    songbird: Arc<Songbird>,
-    guild_channel: GuildChannel,
-    cache: Arc<Cache>,
-}
-
-impl VoiceCallEvent {
-    fn new(
-        lavalink: LavalinkClient,
-        songbird: Arc<Songbird>,
-        guild_channel: GuildChannel,
-        cache: Arc<Cache>,
-    ) -> Self {
-        Self {
-            lavalink,
-            songbird,
-            guild_channel,
-            cache,
-        }
-    }
-}
-
-#[async_trait]
-impl SongbirdEventHandler for VoiceCallEvent {
-    async fn act(&self, ctx: &EventContext<'_>) -> Option<Event> {
-        if let EventContext::ClientDisconnect(_) = ctx {
-            let members = match self.guild_channel.members(&self.cache) {
-                Ok(count) => count,
-                Err(e) => {
-                    eprintln!("Error getting users in VC: {:?}", e);
-                    return None;
-                }
-            };
-
-            let guild_id = self.guild_channel.guild_id;
-
-            if members.len() > 1 {
-                return None;
-            }
-
-            if self.songbird.get(guild_id).is_some() {
-                if let Err(e) = self.songbird.remove(guild_id).await {
-                    eprintln!("Error removeing Sonbird Call: {:?}", e);
-                }
-            }
-
-            let player_context = self
-                .lavalink
-                .get_player_context(guild_id)
-                .expect("No PlayerContext found");
-
-            if let Err(e) = player_context.stop_now().await {
-                eprintln!("Error stopping player: {:?}", e);
-            }
-
-            if let Err(e) = self.lavalink.delete_player(guild_id).await {
-                match e {
-                    LavalinkError::SerdeErrorJson(_) => {}
-                    _ => eprintln!("Error deleting player: {:?}", e),
-                }
-            }
-        }
-
-        None
-    }
-}
-
 pub async fn send_message<S: Into<String>>(ctx: &Context<'_>, message: S) -> () {
     if let Err(e) = ctx.send(CreateReply::default().content(message)).await {
         eprintln!("Error sending message: {:?}", e);
@@ -163,28 +87,12 @@ pub async fn join(ctx: &Context<'_>) -> Result<PlayerContext> {
     let handler = manager.join_gateway(guild_id, connect_to).await;
     // let guild_id_raw: u64 = guild_id.into();
     let player_context = match handler {
-        Ok((connection_info, call)) => {
-            let voice_channel = serenity::ChannelId::from(connect_to)
-                .to_channel(&ctx)
-                .await?
-                .guild()
-                .expect("No Guild found");
-
-            call.lock().await.add_global_event(
-                CoreEvent::ClientDisconnect.into(),
-                VoiceCallEvent::new(
-                    lava_client.clone(),
-                    manager,
-                    voice_channel,
-                    ctx.serenity_context().cache.clone(),
-                ),
-            );
-
+        Ok((connection_info, _call)) => {
             lava_client
                 .create_player_context_with_data(
                     guild_id,
                     connection_info,
-                    Arc::new(LavalinkData::default()),
+                    Arc::new(PlayerData::new()),
                 )
                 .await?
         }
@@ -206,7 +114,7 @@ pub async fn leave(ctx: &Context<'_>) -> Result<()> {
         manager.remove(guild_id).await?;
     }
 
-    let lava_client = &ctx.data().lavalink;
+    let lava_client = ctx.data().lavalink.clone();
     let player_context = lava_client
         .get_player_context(guild_id)
         .expect("No PlayerContext found");
@@ -216,10 +124,7 @@ pub async fn leave(ctx: &Context<'_>) -> Result<()> {
     }
 
     if let Err(e) = lava_client.delete_player(guild_id).await {
-        match e {
-            LavalinkError::SerdeErrorJson(_) => {}
-            _ => eprintln!("Error deleting player: {:?}", e),
-        }
+        eprintln!("Error deleting player: {:?}", e);
     }
 
     Ok(())

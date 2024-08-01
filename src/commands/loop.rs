@@ -6,14 +6,13 @@ use crate::utils::*;
 pub async fn r#loop(ctx: Context<'_>) -> StdResult<()> {
     match discord::get_player(&ctx) {
         Some(player_context) => {
-            let player_data = &player_context.data::<LavalinkData>()?;
-            let mut looping = player_data.looping.lock().await;
+            let mut player_data = *player_context.data::<PlayerData>()?;
 
-            if *looping {
-                *looping = false;
+            if player_data.looping {
+                player_data.toggle_loop(false);
                 discord::send_message(&ctx, "Disabled looping").await;
             } else {
-                *looping = true;
+                player_data.toggle_loop(true);
                 discord::send_message(&ctx, "Enabled looping").await;
             }
         }
