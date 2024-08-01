@@ -6,8 +6,6 @@ pub enum Error {
     #[error("Generic {0}")]
     Generic(String),
 
-    // #[error(transparent)]
-    // UnexpectedError(StandardError),
     #[error(transparent)]
     EnvVarError(#[from] std::env::VarError),
 
