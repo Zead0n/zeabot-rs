@@ -22,9 +22,9 @@ impl PlayerData {
         Self { looping: false }
     }
 
-    pub fn toggle_loop(&mut self, toggle: bool) {
-        self.looping = toggle;
-    }
+    // pub fn toggle_loop(&mut self, toggle: bool) {
+    //     self.looping = toggle;
+    // }
 }
 
 impl Copy for PlayerData {}
