@@ -21,7 +21,7 @@ pub struct PlayerData {
 impl PlayerData {
     pub fn new() -> Self {
         Self {
-            looping: false.into(),
+            looping: Mutex::new(false),
         }
     }
 
