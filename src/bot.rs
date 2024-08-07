@@ -28,46 +28,17 @@ pub async fn load_bot(
             println!("Logged in as {}", _ready.user.name);
 
             // Setup Avatar
-            let mut bot_user = match ctx.http.get_current_user().await {
-                Ok(user) => user,
-                Err(e) => return Err(e.into()),
-            };
-            let new_avatar = serenity::CreateAttachment::path("/data/avatar.gif").await?;
-            let profile = serenity::EditProfile::new().avatar(&new_avatar);
+            // let mut bot_user = match ctx.http.get_current_user().await {
+            //     Ok(user) => user,
+            //     Err(e) => return Err(e.into()),
+            // };
+            // let new_avatar = serenity::CreateAttachment::path("/data/avatar.gif").await?;
+            // let profile = serenity::EditProfile::new().avatar(&new_avatar);
+            // bot_user.edit(ctx, profile).await?;
 
-            bot_user.edit(ctx, profile).await?;
             poise::builtins::register_globally(ctx, &framework.options().commands).await?;
 
-            // Create LavalinkClient
-            // let lavalink_password = match std::env::var("LAVALINK_PASSWORD") {
-            //     Ok(token) => token,
-            //     Err(e) => panic!("Failed to obtain LAVALINK_PASSWORD: {:?}", e),
-            // };
-
             let user_id = ctx.cache.current_user().id;
-
-            // let node_local = NodeBuilder {
-            //     hostname: "lavalink:2333".to_string(),
-            //     is_ssl: false,
-            //     events: events::Events::default(),
-            //     password: lavalink_password,
-            //     user_id: user_id_raw.into(),
-            //     session_id: None,
-            // };
-
-            // let custom_events = events::Events {
-            //     track_end: Some()
-            //     ..Default::default()
-            // };
-
-            // let lava_client = LavalinkClient::new_with_data(
-            //     events::Events::default(),
-            //     vec![node_local],
-            //     NodeDistributionStrategy::new(),
-            //     Arc::new(PlayerData::default()),
-            // )
-            // .await;
-
             let lava_client = lavalink::create_lavalink_client(user_id.into()).await?;
 
             Ok(DiscordData {
