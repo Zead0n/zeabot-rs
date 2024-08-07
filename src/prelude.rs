@@ -1,4 +1,5 @@
 use lavalink_rs::prelude::*;
+use serenity::prelude::Mutex;
 
 pub use crate::error::{Error, StandardError};
 
@@ -14,23 +15,52 @@ pub struct DiscordData {
 
 #[derive(Debug)]
 pub struct PlayerData {
-    pub looping: bool,
+    pub looping: Mutex<bool>,
 }
 
 impl PlayerData {
     pub fn new() -> Self {
-        Self { looping: false }
+        Self {
+            looping: false.into(),
+        }
     }
 
-    // pub fn toggle_loop(&mut self, toggle: bool) {
-    //     self.looping = toggle;
+    // pub async fn get_loop_state(&self) -> bool {
+    //     let state = *self.looping.lock().await;
+    //     state
+    // }
+    //
+    // pub async fn toggle_loop(&mut self) -> bool {
+    //     let mut loop_state = *self.looping.lock().await;
+    //
+    //     if loop_state == true {
+    //         loop_state = false;
+    //     } else {
+    //         loop_state = true;
+    //     }
+    //
+    //     loop_state
     // }
 }
 
-impl Copy for PlayerData {}
+// impl Deref for PlayerData {
+//     type Target = PlayerData;
+//
+//     fn deref(&self) -> &Self::Target {
+//         &self
+//     }
+// }
+//
+// impl DerefMut for PlayerData {
+//     fn deref_mut(&mut self) -> &mut Self::Target {
+//         self
+//     }
+// }
 
-impl Clone for PlayerData {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
+// impl Copy for PlayerData {}
+
+// impl Clone for PlayerData {
+//     fn clone(&self) -> Self {
+//         *self
+//     }
+// }
