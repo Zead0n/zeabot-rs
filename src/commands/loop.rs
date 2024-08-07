@@ -13,10 +13,10 @@ pub async fn r#loop(ctx: Context<'_>) -> StdResult<()> {
 
             if *loop_state {
                 *loop_state = false;
-                discord::send_message(&ctx, "Enabled looping").await;
+                discord::send_message(&ctx, "Disabled looping").await;
             } else {
                 *loop_state = true;
-                discord::send_message(&ctx, "Disabled looping").await;
+                discord::send_message(&ctx, "Enabled looping").await;
             }
         }
         None => discord::send_message(&ctx, "Not in Voice channel").await,
