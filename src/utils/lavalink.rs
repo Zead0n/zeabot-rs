@@ -44,10 +44,20 @@ async fn track_end(client: LavalinkClient, _session_id: String, event: &events::
         return;
     };
 
-    if *player_data.looping.lock().await {
-        let queue = player_context.get_queue();
-        if let Err(e) = queue.push_to_front(event.track.clone()) {
-            eprintln!("Error looping track: {:?}", e);
+    let loop_state = *player_data.loop_state.lock().await;
+    match loop_state {
+        LoopState::Song => {
+            let queue = player_context.get_queue();
+            if let Err(e) = queue.push_to_front(event.track.clone()) {
+                eprintln!("Error looping song track: {:?}", e);
+            }
         }
+        LoopState::Queue => {
+            let queue = player_context.get_queue();
+            if let Err(e) = queue.push_to_back(event.track.clone()) {
+                eprintln!("Error looping queue track: {:?}", e);
+            }
+        }
+        _ => {}
     }
 }

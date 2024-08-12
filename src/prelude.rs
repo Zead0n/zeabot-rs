@@ -13,34 +13,38 @@ pub struct DiscordData {
     pub lavalink: LavalinkClient,
 }
 
-#[derive(Debug)]
+pub enum LoopState {
+    Song,
+    Queue,
+    Cancel,
+}
+
 pub struct PlayerData {
-    pub looping: Mutex<bool>,
+    pub loop_state: Mutex<LoopState>,
 }
 
 impl PlayerData {
     pub fn new() -> Self {
         Self {
-            looping: Mutex::new(false),
+            loop_state: Mutex::new(LoopState::Cancel),
         }
     }
 
-    // pub async fn get_loop_state(&self) -> bool {
-    //     let state = *self.looping.lock().await;
-    //     state
+    pub async fn set_loop_state(&mut self, state: LoopState) {
+        *self.loop_state.lock().await = state;
+    }
+
+    // pub async fn get_loop_state(&self) -> LoopState {
+    //     self.loop_state.lock().await.clone()
     // }
-    //
-    // pub async fn toggle_loop(&mut self) -> bool {
-    //     let mut loop_state = *self.looping.lock().await;
-    //
-    //     if loop_state == true {
-    //         loop_state = false;
-    //     } else {
-    //         loop_state = true;
-    //     }
-    //
-    //     loop_state
-    // }
+}
+
+impl Copy for LoopState {}
+
+impl Clone for LoopState {
+    fn clone(&self) -> Self {
+        *self
+    }
 }
 
 // impl Deref for PlayerData {

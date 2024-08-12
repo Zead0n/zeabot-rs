@@ -15,11 +15,6 @@ pub fn get_commands() -> Vec<poise::Command<DiscordData, StandardError>> {
     vec![
         join::join(),
         leave::leave(),
-        // poise::Command {
-        //     subcommands: vec![play::url(), play::search()],
-        //     subcommand_required: true,
-        //     ..play::play()
-        // },
         play::play(),
         pause::pause(),
         skip::skip(),
@@ -28,6 +23,6 @@ pub fn get_commands() -> Vec<poise::Command<DiscordData, StandardError>> {
             ..r#loop::r#loop()
         },
         resume::resume(),
-        // queue::queue(),
+        queue::queue(),
     ]
 }
