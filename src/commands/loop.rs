@@ -15,6 +15,7 @@ pub async fn song(ctx: Context<'_>) -> StdResult<()> {
         Some(player_context) => {
             let player_data = &player_context.data::<PlayerData>()?;
             *player_data.loop_state.lock().await = LoopState::Song;
+            discord::send_message(&ctx, "Looping song").await
         }
         None => discord::send_message(&ctx, "Not in Voice channel").await,
     }
@@ -28,6 +29,7 @@ pub async fn queue(ctx: Context<'_>) -> StdResult<()> {
         Some(player_context) => {
             let player_data = &player_context.data::<PlayerData>()?;
             *player_data.loop_state.lock().await = LoopState::Queue;
+            discord::send_message(&ctx, "Looping queue").await
         }
         None => discord::send_message(&ctx, "Not in Voice channel").await,
     }
@@ -41,6 +43,7 @@ pub async fn off(ctx: Context<'_>) -> StdResult<()> {
         Some(player_context) => {
             let player_data = &player_context.data::<PlayerData>()?;
             *player_data.loop_state.lock().await = LoopState::Cancel;
+            discord::send_message(&ctx, "Disabled looping").await
         }
         None => discord::send_message(&ctx, "Not in Voice channel").await,
     }
