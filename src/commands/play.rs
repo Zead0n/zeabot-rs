@@ -1,23 +1,21 @@
+use std::borrow::Cow;
+use std::time::Duration;
+use std::usize;
+
+use ::serenity::all::CreateInteractionResponseMessage;
+use futures::StreamExt;
+use lavalink_rs::model::track::TrackData;
 use lavalink_rs::prelude::*;
-// use lavalink_rs::model::track::TrackDiscordData;
-// use poise::reply::CreateReply;
-// use poise::serenity_prelude as serenity;
-// use serenity::all::Message;
-// use serenity::builder::{CreateActionRow, CreateButton, CreateEmbed};
-// use serenity::futures::StreamExt;
-// use serenity::prelude::Mutex;
-// use songbird::input::{AuxMetadata, YoutubeDl as SongbirdDl};
-// use songbird::Call;
-// use std::borrow::Cow;
-// use std::sync::Arc;
-// use std::time::Duration;
-// use youtube_dl::*;
+use poise::serenity_prelude as serenity;
+use poise::CreateReply;
+use serenity::builder::{CreateActionRow, CreateButton, CreateEmbed};
+use serenity::CreateInteractionResponse::UpdateMessage;
+use serenity::Message;
 
 use crate::utils::*;
 use crate::*;
-// use bot::HttpKey;
 
-#[poise::command(slash_command, subcommands("url"))]
+#[poise::command(slash_command, subcommands("url", "search"))]
 pub async fn play(ctx: Context<'_>) -> StdResult<()> {
     discord::send_message(&ctx, "Should require subcommand".to_string()).await;
 
@@ -46,6 +44,199 @@ pub async fn url(ctx: Context<'_>, #[description = "Enter a URL"] url: String) -
     };
 
     Ok(())
+}
+
+#[poise::command(slash_command)]
+pub async fn search(
+    ctx: Context<'_>,
+    #[description = "Search a track"] search: String,
+) -> StdResult<()> {
+    if !discord::has_perm(&ctx).await? {
+        return Ok(());
+    }
+
+    match discord::get_player(&ctx) {
+        Some(player_context) => initialize_search(&ctx, &player_context, &search).await?,
+        None => {
+            ctx.defer().await?;
+            let new_player_context = discord::join(&ctx).await?;
+            initialize_search(&ctx, &new_player_context, &search).await?;
+        }
+    }
+
+    Ok(())
+}
+
+async fn initialize_search(
+    ctx: &Context<'_>,
+    player_context: &PlayerContext,
+    search: &str,
+) -> Result<()> {
+    let lava_client = &ctx.data().lavalink;
+
+    let loaded_tracks = lava_client
+        .load_tracks(
+            ctx.guild_id().expect("No guild_id found for 'play url'"),
+            search,
+        )
+        .await?;
+
+    let Some(TrackLoadData::Search(search_results)) = loaded_tracks.data else {
+        discord::send_message(ctx, "Unable to search").await;
+        return Ok(());
+    };
+
+    if let Err(e) = display_search(ctx, player_context, &search_results).await {
+        panic!("Error initializing search: {:?}", e);
+    }
+
+    Ok(())
+}
+
+async fn display_search(
+    ctx: &Context<'_>,
+    player_context: &PlayerContext,
+    search_results: &Vec<TrackData>,
+) -> Result<()> {
+    let mut index = 0;
+    // let reply = check_result(ctx.send(search_msg(search, index).unwrap()).await);
+    let message_reply = match search_message(search_results, index) {
+        Ok(message) => message,
+        Err(e) => panic!("Error creating search message: {:?}", e),
+    };
+
+    let reply = match ctx.send(message_reply).await {
+        Ok(reply) => reply,
+        Err(e) => panic!("Error creating search message: {:?}", e),
+    };
+
+    let msg: Cow<Message> = reply.message().await?;
+    let mut interaction_stream = msg
+        .clone()
+        .await_component_interaction(&ctx.serenity_context().shard)
+        .timeout(Duration::from_secs(60))
+        .stream();
+    while let Some(interaction) = interaction_stream.next().await {
+        let custom_id = interaction.data.custom_id.as_str();
+        if let Err(e) = ctx.defer().await {
+            panic!("Error defering search: {:?}", e);
+        }
+
+        match custom_id {
+            "up" => {
+                if index > 0 {
+                    index -= 1;
+                } else {
+                    index = 4;
+                }
+
+                if let Err(e) = interaction
+                    .create_response(
+                        &ctx,
+                        UpdateMessage(
+                            search_message(search_results, index)
+                                .unwrap()
+                                .to_slash_initial_response(CreateInteractionResponseMessage::new()),
+                        ),
+                    )
+                    .await
+                {
+                    panic!("Error updating search message: {:?}", e);
+                }
+            }
+            "down" => {
+                if index < 4 {
+                    index += 1;
+                } else {
+                    index = 0;
+                }
+
+                if let Err(e) = interaction
+                    .create_response(
+                        &ctx,
+                        UpdateMessage(
+                            search_message(search_results, index)
+                                .unwrap()
+                                .to_slash_initial_response(CreateInteractionResponseMessage::new()),
+                        ),
+                    )
+                    .await
+                {
+                    panic!("Error updating search message: {:?}", e);
+                }
+            }
+            "select" => {
+                let track: TrackData = search_results
+                    .get(index as usize)
+                    .expect("No TrackData found in search_result")
+                    .to_owned();
+
+                if let Err(e) = add_to_queue(ctx, player_context, &track.info.uri.unwrap()).await {
+                    panic!("Error adding track by search: {:?}", e);
+                };
+
+                let video_respone = format!("**Successfully added track:** {}", track.info.title);
+                if let Err(e) = ctx.say(video_respone).await {
+                    panic!("Error sending success search: {:?}", e);
+                }
+
+                return Ok(());
+            }
+            _ => println!("Unknown custom_id"),
+        }
+    }
+
+    Ok(())
+}
+
+fn search_message(search: &Vec<TrackData>, index: u8) -> Result<CreateReply> {
+    let mut song_list = String::new();
+    for (k, v) in search.iter().enumerate() {
+        match k {
+            0 => {
+                if 0 == index {
+                    song_list.push_str(format!("__**{}**__", v.info.title.clone()).as_str());
+                } else {
+                    song_list.push_str(format!("{}", v.info.title.clone()).as_str());
+                }
+            }
+            _ => {
+                if k == index as usize {
+                    song_list.push_str(format!("\n\n__**{}**__", v.info.title.clone()).as_str());
+                } else {
+                    song_list.push_str(format!("\n\n{}", v.info.title).as_str());
+                }
+            }
+        }
+    }
+
+    let thumbnail_string: &String = search
+        .get(index as usize)
+        .expect("No video found in search")
+        .info
+        .artwork_url
+        .as_ref()
+        .expect("No thumbnail found");
+    let embed: CreateEmbed = serenity::CreateEmbed::new()
+        .title("Search result")
+        .color((255, 0, 0))
+        .field("Found tracks:", song_list, false)
+        .thumbnail(thumbnail_string);
+    let components: CreateActionRow = serenity::CreateActionRow::Buttons(vec![
+        CreateButton::new("up")
+            .emoji("⬆️".chars().next().unwrap())
+            .style(serenity::ButtonStyle::Primary),
+        CreateButton::new("down")
+            .emoji("⬇️".chars().next().unwrap())
+            .style(serenity::ButtonStyle::Primary),
+        CreateButton::new("select")
+            .emoji("🎵".chars().next().unwrap())
+            .style(serenity::ButtonStyle::Success),
+    ]);
+
+    Ok(CreateReply::default()
+        .embed(embed)
+        .components(vec![components]))
 }
 
 async fn add_to_queue(ctx: &Context<'_>, player_context: &PlayerContext, song: &str) -> Result<()> {
@@ -317,7 +508,7 @@ async fn add_to_queue(ctx: &Context<'_>, player_context: &PlayerContext, song: &
 //             }
 //         }
 //     }
-
+//
 //     let thumbnail_string: &String = search
 //         .get(index as usize)
 //         .expect("No video found in search")
@@ -340,7 +531,7 @@ async fn add_to_queue(ctx: &Context<'_>, player_context: &PlayerContext, song: &
 //             .emoji("🎵".chars().next().unwrap())
 //             .style(serenity::ButtonStyle::Success),
 //     ]);
-
+//
 //     Ok(CreateReply::default()
 //         .embed(embed)
 //         .components(vec![components]))
