@@ -81,10 +81,12 @@ async fn initialize_search(
         )
         .await?;
 
-    let Some(TrackLoadData::Search(search_results)) = loaded_tracks.data else {
+    let Some(TrackLoadData::Search(mut search_results)) = loaded_tracks.data else {
         discord::send_message(ctx, "Unable to search").await;
         return Ok(());
     };
+
+    search_results.truncate(5);
 
     if let Err(e) = display_search(ctx, player_context, &search_results).await {
         panic!("Error initializing search: {:?}", e);
