@@ -8,6 +8,7 @@ use std::sync::Arc;
 const TEST_SERVER: u64 = 884664077643829248;
 const MEME_CORP: u64 = 459781165377650688;
 const NIPPON: u64 = 270329415404093440;
+const GAMER_PALS: u64 = 812875393081671750;
 
 pub async fn has_perm(ctx: &Context<'_>) -> Result<bool> {
     let member = ctx.author_member().await.expect("No member found");
@@ -25,6 +26,7 @@ pub async fn has_perm(ctx: &Context<'_>) -> Result<bool> {
         }
         TEST_SERVER => true,
         MEME_CORP => true,
+        GAMER_PALS => true,
         _ => {
             println!("An unknown server has run a command");
             false
