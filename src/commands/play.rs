@@ -56,7 +56,7 @@ pub async fn search(
     }
 
     match discord::get_player(&ctx) {
-        Some(player_context) => initialize_search(&ctx, &player_context, &search).await?,
+        Some(player_context) => initialize_search(&ctx, &player_context, &format!("{}{}", "ytsearch", search)).await?,
         None => {
             ctx.defer().await?;
             let new_player_context = discord::join(&ctx).await?;
