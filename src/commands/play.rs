@@ -60,7 +60,7 @@ pub async fn search(
             initialize_search(
                 &ctx,
                 &player_context,
-                &format!("{} {}", "ytsearch:", search),
+                format!("ytsearch: {}", search).as_ref(),
             )
             .await?
         }
