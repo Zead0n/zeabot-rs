@@ -179,11 +179,6 @@ async fn display_search(
                     panic!("Error adding track by search: {:?}", e);
                 };
 
-                let video_respone = format!("**Successfully added track:** {}", track.info.title);
-                if let Err(e) = ctx.say(video_respone).await {
-                    panic!("Error sending success search: {:?}", e);
-                }
-
                 return Ok(());
             }
             _ => println!("Unknown custom_id"),
